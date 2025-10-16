@@ -119,7 +119,7 @@ def get_model(model_cfg: dict, device: str):
         elif model_cfg.model_name == "midnight":
             model, transform = get_midnight(model_cfg.ckpt_path)
         else:
-            model, transform = get_from_safetensors(
+            model, transform, tokenizer = get_from_safetensors(
                 model_cfg.ckpt_path, use_fast="dinov3" in model_cfg.model_name
             )
     elif model_cfg.type == "open_clip":
