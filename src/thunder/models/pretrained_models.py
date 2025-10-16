@@ -119,7 +119,9 @@ def get_model(model_cfg: dict, device: str):
         elif model_cfg.model_name == "midnight":
             model, transform = get_midnight(model_cfg.ckpt_path)
         else:
-            model, transform, tokenizer = get_from_safetensors(model_cfg.ckpt_path)
+            model, transform = get_from_safetensors(
+                model_cfg.ckpt_path, use_fast="dinov3" in model_cfg.model_name
+            )
     elif model_cfg.type == "open_clip":
         model, transform, tokenizer = get_from_open_clip(model_cfg.ckpt_path)
     else:
@@ -279,6 +281,9 @@ def get_model(model_cfg: dict, device: str):
         "phikon2",
         "dinov2base",
         "dinov2large",
+        "dinov3vits16pretrainlvd1689m",
+        "dinov3vitb16pretrainlvd1689m",
+        "dinov3vitl16pretrainlvd1689m",
         "vitbasepatch16224in21k",
         "vitlargepatch16224in21k",
     ]:
@@ -291,7 +296,13 @@ def get_model(model_cfg: dict, device: str):
                 emb = out.last_hidden_state[:, 1:]
             return emb
 
-    elif model_cfg.model_name in ["hiboub", "hiboul"]:
+    elif model_cfg.model_name in [
+        "hiboub",
+        "hiboul",
+        "dinov3vits16pretrainlvd1689m",
+        "dinov3vitb16pretrainlvd1689m",
+        "dinov3vitl16pretrainlvd1689m",
+    ]:
 
         def extract_embedding(src, pretrained_model, task_type="linear_probing"):
             out = pretrained_model(src)
@@ -378,6 +389,9 @@ def get_model_from_name(model_name: str, device: str):
         * musk
         * dinov2base
         * dinov2large
+        * dinov3vits16pretrainlvd1689m
+        * dinov3vitb16pretrainlvd1689m
+        * dinov3vitl16pretrainlvd1689m
         * vitbasepatch16224in21k
         * vitlargepatch16224in21k
         * clipvitbasepatch32
@@ -468,7 +482,7 @@ def get_from_open_clip(ckpt_path: str):
     return model, transform, tokenizer
 
 
-def get_from_safetensors(ckpt_path: str):
+def get_from_safetensors(ckpt_path: str, use_fast: str = False):
     """
     Adapted from:
     - https://huggingface.co/owkin/phikon
@@ -477,12 +491,13 @@ def get_from_safetensors(ckpt_path: str):
     - https://huggingface.co/histai/hibou-L
 
     :param ckpt_path: path to the stored checkpoint.
+    :param use_fast: whether to use fast image processor.
     """
     # Model
     model = AutoModel.from_pretrained(ckpt_path)
 
     # Transform
-    processor = AutoImageProcessor.from_pretrained(ckpt_path, use_fast=False)
+    processor = AutoImageProcessor.from_pretrained(ckpt_path, use_fast=use_fast)
 
     def transform(im):
         return processor(im, return_tensors="pt")["pixel_values"].squeeze(0)

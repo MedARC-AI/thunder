@@ -26,6 +26,9 @@ class ModelConstants(Enum):
         "dinov2base",
         "dinov2large",
         "vitbasepatch16224in21k",
+        "dinov3vits16pretrainlvd1689m",
+        "dinov3vitb16pretrainlvd1689m",
+        "dinov3vitl16pretrainlvd1689m",
         "vitlargepatch16224in21k",
         # Natural-image-language models
         "clipvitbasepatch32",
