@@ -74,13 +74,10 @@ def train_probe(
                 for param in pretrained_model.parameters():
                     param.requires_grad = False
                 pretrained_model.to(device)
-                OmegaConf.set_struct(cfg, False)
-                cfg.pretrained_model = {"emb_dim": model_cls.emb_dim}
             else:
                 pretrained_model, transform, extract_embedding = load_pretrained_model(
                     cfg, adaptation_type, device
                 )
-
             if adaptation_type == "lora":
                 pretrained_model = init_adapters(cfg, pretrained_model, device)
                 pretrained_model.train()
@@ -88,6 +85,15 @@ def train_probe(
                 pretrained_model.eval()
         else:
             pretrained_model = transform = extract_embedding = None
+
+    # Setting cfg.pretrained_model if custom model
+    if model_cls is not None:
+        cfg_pretrained_model = {}
+        cfg_pretrained_model["emb_dim"] = model_cls.emb_dim
+        if hasattr(model_cls, "emb_dim_seg"):
+            cfg_pretrained_model["emb_dim_seg"] = model_cls.emb_dim_seg
+        OmegaConf.set_struct(cfg, False)
+        cfg.pretrained_model = cfg_pretrained_model
 
     # Dict of hyperparameters to search
     hyperparams_dict = get_hyperaparams_dict(cfg)
