@@ -9,6 +9,7 @@ import torchvision.transforms.functional as F
 import torchvision.transforms.v2 as v2
 from PIL import Image
 from torchvision.transforms import ColorJitter, InterpolationMode
+import cv2
 
 try:
     import kornia.morphology as _kmorph
@@ -19,6 +20,165 @@ _Image = Union[Image.Image, torch.Tensor, np.ndarray]
 
 
 _AUG_RNG = random.Random()
+
+
+# Constants for RandStain transformation
+randstain_constants = {
+    "bach": {
+        "L": {
+            "avg": {"mean": 176.212, "std": 13.677, "distribution": "laplace"},
+            "std": {"mean": 38.368, "std": 8.739, "distribution": "laplace"},
+        },
+        "A": {
+            "avg": {"mean": 150.281, "std": 8.22, "distribution": "laplace"},
+            "std": {"mean": 10.942, "std": 3.087, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 101.909, "std": 8.559, "distribution": "laplace"},
+            "std": {"mean": 12.358, "std": 3.998, "distribution": "laplace"},
+        },
+    },
+    "ccrcc": {
+        "L": {
+            "avg": {"mean": 162.086, "std": 23.691, "distribution": "norm"},
+            "std": {"mean": 45.72, "std": 9.992, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 152.298, "std": 7.65, "distribution": "norm"},
+            "std": {"mean": 10.916, "std": 2.58, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 117.695, "std": 4.044, "distribution": "norm"},
+            "std": {"mean": 9.185, "std": 1.973, "distribution": "norm"},
+        },
+    },
+    "crc": {
+        "L": {
+            "avg": {"mean": 160.658, "std": 28.507, "distribution": "laplace"},
+            "std": {"mean": 35.602, "std": 12.938, "distribution": "laplace"},
+        },
+        "A": {
+            "avg": {"mean": 155.721, "std": 8.59, "distribution": "laplace"},
+            "std": {"mean": 8.644, "std": 3.222, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 113.101, "std": 4.914, "distribution": "laplace"},
+            "std": {"mean": 5.326, "std": 1.834, "distribution": "laplace"},
+        },
+    },
+    "esca": {
+        "L": {
+            "avg": {"mean": 162.977, "std": 28.455, "distribution": "laplace"},
+            "std": {"mean": 38.103, "std": 9.602, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 153.457, "std": 10.034, "distribution": "laplace"},
+            "std": {"mean": 9.525, "std": 3.285, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 112.414, "std": 7.494, "distribution": "norm"},
+            "std": {"mean": 5.663, "std": 1.883, "distribution": "norm"},
+        },
+    },
+    "patch_camelyon": {
+        "L": {
+            "avg": {"mean": 157.616, "std": 40.322, "distribution": "norm"},
+            "std": {"mean": 47.41, "std": 12.984, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 151.256, "std": 10.978, "distribution": "norm"},
+            "std": {"mean": 7.997, "std": 3.214, "distribution": "laplace"},
+        },
+        "B": {
+            "avg": {"mean": 113.587, "std": 12.046, "distribution": "laplace"},
+            "std": {"mean": 6.327, "std": 2.779, "distribution": "laplace"},
+        },
+    },
+    "tcga_crc_msi": {
+        "L": {
+            "avg": {"mean": 157.412, "std": 17.274, "distribution": "norm"},
+            "std": {"mean": 41.626, "std": 8.558, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 155.497, "std": 4.807, "distribution": "norm"},
+            "std": {"mean": 8.973, "std": 2.735, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 113.043, "std": 4.678, "distribution": "laplace"},
+            "std": {"mean": 5.587, "std": 1.552, "distribution": "laplace"},
+        },
+    },
+    "tcga_tils": {
+        "L": {
+            "avg": {"mean": 159.268, "std": 33.309, "distribution": "norm"},
+            "std": {"mean": 40.325, "std": 12.098, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 151.63, "std": 9.875, "distribution": "norm"},
+            "std": {"mean": 8.519, "std": 3.292, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 117.799, "std": 6.768, "distribution": "norm"},
+            "std": {"mean": 7.612, "std": 2.546, "distribution": "laplace"},
+        },
+    },
+    "tcga_uniform": {
+        "L": {
+            "avg": {"mean": 140.328, "std": 26.043, "distribution": "norm"},
+            "std": {"mean": 42.271, "std": 8.964, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 156.3, "std": 7.71, "distribution": "norm"},
+            "std": {"mean": 7.451, "std": 2.719, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 114.37, "std": 5.652, "distribution": "norm"},
+            "std": {"mean": 5.814, "std": 1.605, "distribution": "norm"},
+        },
+    },
+    "wilds": {
+        "L": {
+            "avg": {"mean": 169.551, "std": 32.673, "distribution": "norm"},
+            "std": {"mean": 34.248, "std": 11.67, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 148.907, "std": 7.386, "distribution": "norm"},
+            "std": {"mean": 6.937, "std": 2.683, "distribution": "laplace"},
+        },
+        "B": {
+            "avg": {"mean": 116.235, "std": 5.245, "distribution": "laplace"},
+            "std": {"mean": 5.577, "std": 1.418, "distribution": "norm"},
+        },
+    },
+    "break_his": {
+        "L": {
+            "avg": {"mean": 184.174, "std": 15.589, "distribution": "laplace"},
+            "std": {"mean": 25.219, "std": 7.311, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 149.7, "std": 12.966, "distribution": "laplace"},
+            "std": {"mean": 7.763, "std": 3.242, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 116.526, "std": 7.479, "distribution": "laplace"},
+            "std": {"mean": 5.346, "std": 1.618, "distribution": "norm"},
+        },
+    },
+    "mhist": {
+        "L": {
+            "avg": {"mean": 179.178, "std": 16.974, "distribution": "norm"},
+            "std": {"mean": 51.886, "std": 5.499, "distribution": "norm"},
+        },
+        "A": {
+            "avg": {"mean": 142.941, "std": 4.153, "distribution": "norm"},
+            "std": {"mean": 9.835, "std": 1.666, "distribution": "norm"},
+        },
+        "B": {
+            "avg": {"mean": 114.176, "std": 3.819, "distribution": "norm"},
+            "std": {"mean": 9.391, "std": 1.522, "distribution": "norm"},
+        },
+    },
+}
 
 
 def set_transform_seed(seed: int) -> None:
@@ -245,7 +405,7 @@ def _random_hed(sigma: float = 0.025) -> Callable[[_Image], _Image]:
     def _inner(img: _Image):
         M = torch.tensor(
             np.array(
-                [[0.651, 0.701, 0.290], [0.269, 0.568, 0.778], [0.633, -0.713, 0.302]],
+                [[0.65, 0.70, 0.29], [0.07, 0.99, 0.11], [0.27, 0.57, 0.78]],
                 dtype="float32",
             )
         )
@@ -454,7 +614,130 @@ def _elastic_transform(alpha: float = 250.0, sigma: float = 6.0):
     return _inner
 
 
-def get_invariance_transforms() -> Dict[str, Callable[[_Image], _Image]]:
+def _random_randstain(
+    dataset_name: str, std_hyper: float = -0.3
+) -> Callable[[_Image], Tuple[_Image, Dict]]:
+    """
+    RandStain transformation.
+    Code inspired from https://github.com/yiqings/RandStainNA/blob/master/randstainna.py
+    """
+
+    if dataset_name not in randstain_constants:
+        raise ValueError(
+            f"Unknown dataset_name '{dataset_name}'. "
+            f"Available: {list(randstain_constants.keys())}"
+        )
+
+    stats = randstain_constants[dataset_name]
+
+    def _inner(img: _Image) -> Tuple[_Image, Dict]:
+
+        rng_seed = _AUG_RNG.randint(0, 2**20 - 1)
+        rng = np.random.RandomState(rng_seed)
+
+        if isinstance(img, Image.Image):
+            rgb = np.array(img)
+            if rgb.dtype != np.uint8:
+                rgb = np.clip(rgb, 0, 255).astype(np.uint8)
+            container = "pil"
+        elif isinstance(img, torch.Tensor):
+            t = _to_tensor(img)
+            rgb = (
+                (t.permute(1, 2, 0).cpu().numpy() * 255.0)
+                .round()
+                .clip(0, 255)
+                .astype(np.uint8)
+            )
+            container = "tensor"
+        elif isinstance(img, np.ndarray):
+            rgb = img
+            if rgb.dtype != np.uint8:
+                if rgb.max() <= 1.0 + 1e-6:
+                    rgb = rgb * 255.0
+                rgb = np.round(rgb).clip(0, 255).astype(np.uint8)
+            container = "ndarray"
+        else:
+            raise TypeError(
+                "Unsupported image type; expected PIL.Image, torch.Tensor, or np.ndarray."
+            )
+
+        # ---- RGB -> LAB ----
+        lab = cv2.cvtColor(rgb, cv2.COLOR_RGB2LAB).astype(np.float32)
+
+        flat = lab.reshape(-1, 3)
+        img_avgs = flat.mean(axis=0)
+        img_stds = flat.std(axis=0)
+        img_stds = np.clip(img_stds, 1e-4, 255.0)
+
+        # ---- sample target avgs/stds per channel (L, A, B) ----
+        tar_avgs = []
+        tar_stds = []
+        sampled = {}
+        for i, ch in enumerate(("L", "A", "B")):
+            ch_stats = stats[ch]
+            # avg
+            loc_avg = ch_stats["avg"]["mean"]
+            scale_avg = ch_stats["avg"]["std"] * (1.0 + std_hyper)
+            dist_avg = ch_stats["avg"]["distribution"].lower()
+            if dist_avg in ("norm", "normal"):
+                tavg = float(rng.normal(loc=loc_avg, scale=max(1e-8, scale_avg)))
+            else:
+                tavg = float(rng.laplace(loc=loc_avg, scale=max(1e-8, scale_avg)))
+            # std
+            loc_std = ch_stats["std"]["mean"]
+            scale_std = ch_stats["std"]["std"] * (1.0 + std_hyper)
+            dist_std = ch_stats["std"]["distribution"].lower()
+            if dist_std in ("norm", "normal"):
+                tstd = float(rng.normal(loc=loc_std, scale=max(1e-8, scale_std)))
+            else:
+                tstd = float(rng.laplace(loc=loc_std, scale=max(1e-8, scale_std)))
+            tstd = max(1e-4, tstd)
+
+            tar_avgs.append(tavg)
+            tar_stds.append(tstd)
+            sampled[ch] = {
+                "target_avg": tavg,
+                "target_std": tstd,
+                "avg_loc": loc_avg,
+                "avg_scale": scale_avg,
+                "avg_dist": dist_avg,
+                "std_loc": loc_std,
+                "std_scale": scale_std,
+                "std_dist": dist_std,
+            }
+
+        tar_avgs = np.array(tar_avgs, dtype=np.float32)
+        tar_stds = np.array(tar_stds, dtype=np.float32)
+
+        out_lab = (lab - img_avgs) * (tar_stds / img_stds) + tar_avgs
+        out_lab = np.clip(out_lab, 0.0, 255.0).astype(np.uint8)
+
+        # ---- LAB -> RGB ----
+        out_rgb = cv2.cvtColor(out_lab, cv2.COLOR_LAB2RGB)
+
+        if container == "pil":
+            out = Image.fromarray(out_rgb)
+        elif container == "tensor":
+            t = torch.from_numpy(out_rgb).permute(2, 0, 1).float() / 255.0
+            out = _from_tensor(t, img)  # use existing to match dtype
+        else:  # ndarray
+            if isinstance(img, np.ndarray) and img.dtype != np.uint8:
+                out = (out_rgb.astype(np.float32) / 255.0).astype(img.dtype)
+            else:
+                out = out_rgb
+
+        params = {
+            "seed": rng_seed,
+            "sampled": sampled,
+        }
+        return out, params
+
+    return _inner
+
+
+def get_invariance_transforms(
+    dataset_name: str,
+) -> Dict[str, Callable[[_Image], _Image]]:
     """
     Getting dictionary of available data augmentation transformations.
 
@@ -469,6 +752,7 @@ def get_invariance_transforms() -> Dict[str, Callable[[_Image], _Image]]:
         "random_color_jitter": _random_color_jitter(),
         "random_gamma": _random_gamma(),
         "random_hed": _random_hed(),
+        "random_randstain": _random_randstain(dataset_name),
         "random_cutout": _random_cutout(),
         "random_dilation": _random_dilation(),
         "random_erosion": _random_erosion(),

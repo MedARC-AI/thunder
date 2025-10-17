@@ -160,7 +160,7 @@ def transformation_invariance(
 
     set_transform_seed(dataset_seed)
 
-    invariance_transforms = get_invariance_transforms()
+    invariance_transforms = get_invariance_transforms(dataset_name)
 
     # ---------------------------------------------------------------------
     # Main evaluation loop: compute similarities between original and transformed embeddings

@@ -25,6 +25,7 @@ setup(
         "mkdocstrings-python==1.16.10",
         "mkdocs-material==9.6.11",
         "numpy==1.24.3",
+        "opencv-python==4.10.0.84",
         "omegaconf==2.3.0",
         "openpyxl==3.1.5",
         "pandas==2.2.3",
