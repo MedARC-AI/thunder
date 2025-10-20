@@ -13,6 +13,7 @@ from omegaconf import DictConfig, OmegaConf
 
 import sys
 
+
 def print_task_hyperparams(cfg: DictConfig, custom_name: Optional[str] = None) -> None:
     """
     Print dataset, model, and only the task-specific hyper-parameters
@@ -169,6 +170,18 @@ def local_seed(seed: int):
         torch.set_rng_state(torch_state)
         if torch.cuda.is_available():
             torch.cuda.set_rng_state(torch_cuda_state)
+
+
+def save_config(res_folder: str, cfg: dict) -> None:
+    """
+    Saving run config.
+    :param res_folder: path where to save config.
+    :param cfg: config dictionary.
+    """
+    cfg_filename = os.path.join(res_folder, "config.json")
+    with open(cfg_filename, "w") as cfgfile:
+        json.dump(cfg, cfgfile)
+    logging.info(f"Config saved at {cfg_filename}")
 
 
 def save_outputs(res_folder: str, outputs: dict) -> None:

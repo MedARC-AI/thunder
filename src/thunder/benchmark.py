@@ -9,7 +9,7 @@ from omegaconf import DictConfig
 
 from .datasets.utils import is_dataset_available
 from .models.utils import is_model_available, load_custom_model_from_file
-from .utils.utils import print_task_hyperparams
+from .utils.utils import print_task_hyperparams, save_config
 
 
 def benchmark(
@@ -423,3 +423,6 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
             res_folder,
             model_cls,
         )
+
+    # Saving config
+    save_config(res_folder, OmegaConf.to_container(cfg, resolve=True))
