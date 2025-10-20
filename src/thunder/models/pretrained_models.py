@@ -281,9 +281,6 @@ def get_model(model_cfg: dict, device: str):
         "phikon2",
         "dinov2base",
         "dinov2large",
-        "dinov3vits16pretrainlvd1689m",
-        "dinov3vitb16pretrainlvd1689m",
-        "dinov3vitl16pretrainlvd1689m",
         "vitbasepatch16224in21k",
         "vitlargepatch16224in21k",
     ]:
@@ -310,6 +307,12 @@ def get_model(model_cfg: dict, device: str):
                 emb = out.pooler_output
             else:
                 emb = out.last_hidden_state[:, 1:]
+                if "dinov3" in model_cfg.model_name:
+                    nb_reg = 4
+                else:
+                    nb_reg = 0
+                emb = emb[:, nb_reg:]  # ignoring register tokens.
+
             return emb
 
     elif model_cfg.model_name in ["virchow", "virchow2"]:
