@@ -74,6 +74,7 @@ def pre_computing_patch_embeddings(
             os.path.join(base_embeddings_folder, dataset_name, model_name, split),
             image_pre_loading,
             embedding_pre_loading,
+            hasattr(cfg.dataset, "div_patches") and cfg.dataset.div_patches,
         )
         split_dataloader = DataLoader(
             split_dataset,
@@ -99,6 +100,7 @@ def pre_computing_patch_embeddings(
                 and split == "test"
                 else None
             ),
+            div_patches=hasattr(cfg.dataset, "div_patches") and cfg.dataset.div_patches,
         )
 
 
@@ -111,6 +113,7 @@ def pre_computing_patch_embeddings_split(
     task_type: str,
     device: torch.device | str = "cuda",
     id2classnames: dict = None,
+    div_patches: bool = False,
 ) -> None:
     """
     Pre-computing embeddings for each patch in a split of a given dataset with a given pre-trained model.
@@ -122,6 +125,7 @@ def pre_computing_patch_embeddings_split(
     :param task_type: type of task to extract emebddings for (classification, segmentation).
     :param device: device to use (cpu, cuda).
     :param id2classnames: mapping from class ids to text labels.
+    :param div_patches: whether to divide image into patches (instead of using full image).
     """
     os.makedirs(embeddings_folder, exist_ok=True)
     emb_path = os.path.join(embeddings_folder, "embeddings.h5")
@@ -144,7 +148,20 @@ def pre_computing_patch_embeddings_split(
             imgs = batch["image"].to(device, non_blocking=True)
             labels = batch["label"].to(device, non_blocking=True)
 
+            if div_patches:
+                # Re-shaping and masking
+                bs, nb_patches, c, h, w = imgs.shape
+                masks = imgs.sum(dim=[2, 3, 4]) != 0
+                imgs = imgs.view(-1, c, h, w)
+
             embeds = extract_embedding(imgs, pretrained_model, task_type=task_type)
+
+            if div_patches:
+                # Mean pooling
+                embeds = embeds.view(bs, nb_patches, embeds.shape[-1])
+                masks = masks.unsqueeze(-1)
+                masks = masks.repeat(1, 1, embeds.shape[-1])
+                embeds = (masks * embeds).sum(dim=1) / masks.sum(dim=1)
 
             embeds = embeds.cpu().numpy().astype(np.float32, copy=False)
             labels = labels.cpu().numpy().astype(np.int64, copy=False)

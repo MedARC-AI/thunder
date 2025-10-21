@@ -1,5 +1,6 @@
 import json
 import os
+import random
 
 import h5py
 import numpy as np
@@ -71,6 +72,7 @@ class PatchDataset(Dataset):
         embeddings_folder: str,
         image_pre_loading: bool = False,
         embedding_pre_loading: bool = False,
+        div_patches: bool = False,
     ) -> None:
         """
         Initializing dataset information.
@@ -83,6 +85,7 @@ class PatchDataset(Dataset):
         :param embeddings_folder: folder storing embeddings.
         :param image_pre_loading: whether to pre-load all images.
         :param embedding_pre_loading: whether to pre-load all embeddings.
+        :param div_patches: whether to divide image into patches (instead of using full image).
         """
         self.images = images
         self.labels = labels
@@ -92,6 +95,7 @@ class PatchDataset(Dataset):
         self.base_data_folder = base_data_folder
         self.image_pre_loading = image_pre_loading
         self.embedding_pre_loading = embedding_pre_loading
+        self.div_patches = div_patches
 
         if dataset_name == "patch_camelyon" and not embedding_pre_loading:
             self.images = h5py.File(
@@ -270,7 +274,48 @@ class PatchDataset(Dataset):
         else:
             viz_image = None
 
-        # Applying model-specific transform
-        image = self.transform(image)
+        if self.dataset_name == "bracs" and self.div_patches:
+            # bracs-specific hyperparameters
+            patch_size = 512
+            max_nb_patches = 100  # 99.5% of bracs train images can be divided into less
+            # than 100 patches so we pick this value to speed
+            # up data loading and feature extraction.
+
+            image = F.pil_to_tensor(image)
+            patches = []
+            for patch_x in range(0, image.shape[1], patch_size):
+                for patch_y in range(0, image.shape[2], patch_size):
+                    patch = image[
+                        :,
+                        patch_x : patch_x + patch_size,
+                        patch_y : patch_y + patch_size,
+                    ]
+                    if (patch_x == 0 and patch_y == 0) or (
+                        patch.shape[1] >= (patch_size / 4)
+                        and patch.shape[2] >= (patch_size / 4)
+                    ):
+                        patch = F.to_pil_image(patch)
+                        patch = self.transform(patch)
+                        patches.append(patch.unsqueeze(0))
+            # Sampling patches
+            random.shuffle(patches)
+            patches = patches[:max_nb_patches]
+            # Padding
+            patches.append(
+                torch.zeros(
+                    max_nb_patches - len(patches),
+                    patches[0].shape[1],
+                    patches[0].shape[2],
+                    patches[0].shape[3],
+                )
+            )
+            image = torch.concatenate(patches, dim=0)
+        elif self.dataset_name != "bracs" and self.div_patches:
+            raise RuntimeError(
+                "Patch-based pre-processing is only implemented for the bracs dataset."
+            )
+        else:
+            # Applying model-specific transform
+            image = self.transform(image)
 
         return image, viz_image
