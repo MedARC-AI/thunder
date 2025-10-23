@@ -49,7 +49,7 @@ def create_splits_tcga_crc_msi(base_folder: str, dataset_cfg: dict) -> None:
         case_id = case_id[1] + case_id[2]
         tcga_case_id_to_im[case_id].append(im)
         tcga_case_id_to_label[case_id].append(label)
-    case_ids = tcga_case_id_to_im.keys()
+    case_ids = list(tcga_case_id_to_im.keys())
     val_case_ids = random.sample(case_ids, int(0.2 * len(case_ids)))
 
     for case_id in case_ids:

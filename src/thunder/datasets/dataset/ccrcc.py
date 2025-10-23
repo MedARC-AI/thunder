@@ -44,7 +44,7 @@ def create_splits_ccrcc(base_folder: str, dataset_cfg: dict) -> None:
                 case_id = im.split("_")[0].split("-")
                 case_id = case_id[1] + case_id[2]
                 tcga_case_id_to_im[case_id].append(im)
-        case_ids = tcga_case_id_to_im.keys()
+        case_ids = list(tcga_case_id_to_im.keys())
         val_case_ids = random.sample(case_ids, int(0.2 * len(case_ids)))
 
         train_images, val_images = [], []
