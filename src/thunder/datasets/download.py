@@ -26,6 +26,10 @@ def download_datasets(datasets: Union[List[str], str], make_splits: bool = False
         * patch_camelyon
         * segpath_epithelial
         * segpath_lymphocytes
+        * spider_breast
+        * spider_colorectal
+        * spider_skin
+        * spider_thorax
         * tcga_crc_msi
         * tcga_tils
         * tcga_uniform
@@ -52,16 +56,20 @@ def download_datasets(datasets: Union[List[str], str], make_splits: bool = False
                 "ccrcc",
                 "crc",
                 "esca",
+                "mhist",
+                "ocelot",
+                "pannuke",
                 "patch_camelyon",
+                "segpath_epithelial",
+                "segpath_lymphocytes",
+                "spider_breast",
+                "spider_colorectal",
+                "spider_skin",
+                "spider_thorax",
                 "tcga_crc_msi",
                 "tcga_tils",
                 "tcga_uniform",
                 "wilds",
-                "ocelot",
-                "pannuke",
-                "segpath_epithelial",
-                "segpath_lymphocytes",
-                "mhist",
             ]
         elif datasets[0] == "classification":
             datasets = [
@@ -71,12 +79,16 @@ def download_datasets(datasets: Union[List[str], str], make_splits: bool = False
                 "ccrcc",
                 "crc",
                 "esca",
+                "mhist",
                 "patch_camelyon",
+                "spider_breast",
+                "spider_colorectal",
+                "spider_skin",
+                "spider_thorax",
                 "tcga_crc_msi",
                 "tcga_tils",
                 "tcga_uniform",
                 "wilds",
-                "mhist",
             ]
         elif datasets[0] == "segmentation":
             datasets = [

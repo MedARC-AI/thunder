@@ -50,14 +50,14 @@ class DatasetConstants(Enum):
         "patch_camelyon",
         "segpath_epithelial",
         "segpath_lymphocytes",
-        "tcga_crc_msi",
-        "tcga_tils",
-        "tcga_uniform",
-        "wilds",
         "spider_breast",
         "spider_colorectal",
         "spider_skin",
         "spider_thorax",
+        "tcga_crc_msi",
+        "tcga_tils",
+        "tcga_uniform",
+        "wilds",
     ]
 
 
