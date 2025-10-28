@@ -165,6 +165,11 @@ def download_models(models: Union[List[str], str]) -> None:
 def download_model(model: str) -> None:
     from huggingface_hub import hf_hub_download
 
+    if "THUNDER_BASE_DATA_FOLDER" not in os.environ:
+        raise EnvironmentError(
+            "Please set base data directory of thunder using `export THUNDER_BASE_DATA_FOLDER=/base/data/directory`"
+        )
+
     base_dir = os.path.join(os.environ["THUNDER_BASE_DATA_FOLDER"], "pretrained_ckpts")
     tag, filename = TAGS_FILENAMES[model]
     local_dir_tag = tag.split("/")[-1].replace("-v2", "2").replace("-", "").lower()
