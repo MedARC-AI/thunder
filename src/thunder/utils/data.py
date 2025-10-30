@@ -146,7 +146,15 @@ class PatchDataset(Dataset):
             with h5py.File(self.labels_path, "r") as lab_h5:
                 self._len = len(lab_h5)
 
-            self.labels = None
+            if self.task_type == "linear_probing":
+                # Pre-loading embeddings and labels for linear probing as faster
+                # and less memory-demanding than segmentation
+                h5_embs = h5py.File(self.embeddings_path)
+                h5_labels = h5py.File(self.labels_path)
+                self.embeddings = h5_to_np(h5_embs)
+                self.labels = h5_to_np(h5_labels)
+            else:
+                self.labels = None
         else:
             self._len = len(self.labels)
 
@@ -165,16 +173,21 @@ class PatchDataset(Dataset):
         """
 
         if self.embedding_pre_loading:
-            key = str(index)
-            with h5py.File(self.embeddings_path, "r") as emb_h5, h5py.File(
-                self.labels_path, "r"
-            ) as lab_h5:
-                self.emb = emb_h5[key][()]
-                self.label = lab_h5[key][()]
+            if not self.task_type == "linear_probing":
+                key = str(index)
+                with (
+                    h5py.File(self.embeddings_path, "r") as emb_h5,
+                    h5py.File(self.labels_path, "r") as lab_h5,
+                ):
+                    emb = emb_h5[key][()]
+                    label = lab_h5[key][()]
+            else:
+                emb = self.embeddings[index]
+                label = self.labels[index]
 
             return {
-                "emb": self.emb,
-                "label": self.label,
+                "emb": emb,
+                "label": label,
             }
 
         # Getting path to label filenames
