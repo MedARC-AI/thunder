@@ -1,16 +1,79 @@
----
-title: Leaderboards
----
+# Leaderboards
 
-# Updates
-* **2025-09-01**: **[Rank-sum Leaderboard]** Segmentation results were updated (small changes based on improved performance for all models on the *ocelot* dataset only -> [Related commit](https://github.com/MICS-Lab/thunder/commit/5f6d6e7cdd6a1df5affed2dac47233f80ce5a205)). Segmentation and global rankings do no thus match exactly (a few small differences only) Table 4 from the current version of our [arXiv paper](https://arxiv.org/abs/2507.07860). The paper will be updated soon.
-* **2025-09-30**: **[SPIDER Leaderboard]** Four SPIDER datasets have been integrated into thunder. Results associated to them have not been integrated into the rank-sum leaderboard (only datasets presented in our [arXiv paper](https://arxiv.org/abs/2507.07860) are aggregated in the rank-sum learderboard), but we have instead created a leaderboard dedicated to SPIDER datasets below.
+## Updates
+* **2025-10-30**: **[Up-to-date Rank-sum Leaderboard]** A new up-to-date rank-sum leaderboard was added. This is an update of the rank-sum leaderboard (Table 4) in our [paper](https://arxiv.org/abs/2507.07860) with new datasets and models, e.g. here we added results for SPIDER datasets and DINOv3 model variants.
+* **2025-10-27**: **[Original (paper) Rank-sum Leaderboard]**  Our arXiv paper was updated and now the rank-sum table in it (Table 4) matches exactly our **Original (paper) Rank-sum Leaderboard**.
 * **2025-10-06**: **[Zero-shot VLM Classification Leaderboard]** A new zero-shot classification task was integrated into THUNDER. Results are presented in a dedicated leaderboard below.
+* **2025-09-30**: **[SPIDER Leaderboard]** Four SPIDER datasets have been integrated into THUNDER. We have created a leaderboard dedicated to SPIDER datasets below.
+* **2025-09-01**: **[Original (paper) Rank-sum Leaderboard]** Segmentation results were updated (small changes based on improved performance for all models on the *ocelot* dataset only -> [Related commit](https://github.com/MICS-Lab/thunder/commit/5f6d6e7cdd6a1df5affed2dac47233f80ce5a205)). Segmentation and global rankings do no thus match exactly (a few small differences only) Table 4 from the current version of our [paper](https://arxiv.org/abs/2507.07860). The paper will be updated soon. **[This was now updated on 2025-10-30]**
 
-# 🏆 Rank-sum Leaderboard
+---
+
+## 🏆 Up-to-date Rank-sum Leaderboard
+
+This leaderboard is an updated version of the rank-sum table (Table 4) in our original [paper](https://arxiv.org/abs/2507.07860).
+
+The following was added (compared with paper results):
+
+* DINOv3 model variants.
+* Updated average performance for all models (including DINOv3 models) and all tasks except segmentation with additional results on SPIDER datasets (results from other datasets used to compute the average performance stay the same).
 
 <div class="table-responsive-sm">
-  <table id="ranksumTable" class="table table-hover table-bordered table-sm nowrap">
+  <table id="ranksumTableUpToDate" class="table table-hover table-bordered table-sm nowrap">
+    <thead class="align-middle text-center">
+      <tr>
+        <th>Model</th>
+        <th>Domain</th>
+        <th>Type</th>
+        <th>KNN &uarr;</th>
+        <th>Lin. prob. &uarr;</th>
+        <th>Few-shot &uarr;</th>
+        <th>Seg.&uarr;</th>
+        <th>Calib. &darr;</th>
+        <th>Adv. attack &darr;</th>
+        <th>Rank sum &darr;</th>
+      </tr>
+    </thead>
+    <tbody>
+          <tr><td>HIBOU-B</td><td>Histopathology</td><td>VM</td><td>78.9 (9)</td><td>81.2 (12)</td><td>76.3 (5)</td><td>67.8 (11)</td><td>3.2 (4)</td><td>52.7 (13)</td><td>54 (7)</td></tr>
+          <tr><td>HIBOU-L</td><td>Histopathology</td><td>VM</td><td>78.6 (11)</td><td>83.7 (6)</td><td>73.8 (9)</td><td>68.6 (6)</td><td>4.7 (21)</td><td>39.5 (6)</td><td>59 (8)</td></tr>
+          <tr><td>H-OPTIMUS-0</td><td>Histopathology</td><td>VM</td><td>81.4 (5)</td><td>83.8 (5)</td><td>76.2 (6)</td><td>65.2 (13)</td><td>4.0 (12)</td><td>43.9 (9)</td><td>50 (6)</td></tr>
+          <tr><td>H-OPTIMUS-1</td><td>Histopathology</td><td>VM</td><td>82.5 (3)</td><td>85.1 (2)</td><td>77.3 (3)</td><td>64.5 (15)</td><td>3.5 (5)</td><td>57.4 (16)</td><td>44 (5)</td></tr>
+          <tr><td>MIDNIGHT</td><td>Histopathology</td><td>VM</td><td>79.9 (7)</td><td>84.7 (4)</td><td>71.5 (15)</td><td>68.8 (5)</td><td>2.9 (2)</td><td>37.0 (4)</td><td>37 (3)</td></tr>
+          <tr><td>PHIKON</td><td>Histopathology</td><td>VM</td><td>75.7 (14)</td><td>80.9 (14)</td><td>73.6 (10)</td><td>68.0 (9)</td><td>5.8 (26)</td><td>33.5 (3)</td><td>76 (12)</td></tr>
+          <tr><td>PHIKON2</td><td>Histopathology</td><td>VM</td><td>73.9 (15)</td><td>79.7 (15)</td><td>71.8 (14)</td><td>67.4 (12)</td><td>3.9 (11)</td><td>43.8 (8)</td><td>75 (11)</td></tr>
+          <tr><td>UNI</td><td>Histopathology</td><td>VM</td><td>80.8 (6)</td><td>83.5 (7)</td><td>78.1 (2)</td><td>67.8 (10)</td><td>3.8 (7)</td><td>40.3 (7)</td><td>39 (4)</td></tr>
+          <tr><td>UNI2-H</td><td>Histopathology</td><td>VM</td><td>83.3 (1)</td><td>85.7 (1)</td><td>79.8 (1)</td><td>69.0 (3)</td><td>3.9 (10)</td><td>31.7 (2)</td><td>18 (1)</td></tr>
+          <tr><td>VIRCHOW</td><td>Histopathology</td><td>VM</td><td>77.4 (13)</td><td>82.8 (9)</td><td>71.8 (13)</td><td>69.2 (2)</td><td>4.5 (19)</td><td>38.3 (5)</td><td>61 (9)</td></tr>
+          <tr><td>VIRCHOW2</td><td>Histopathology</td><td>VM</td><td>82.9 (2)</td><td>84.8 (3)</td><td>73.9 (8)</td><td>69.3 (1)</td><td>3.9 (9)</td><td>31.1 (1)</td><td>24 (2)</td></tr>
+          <tr><td>CONCH</td><td>Histopathology</td><td>VLM</td><td>78.8 (10)</td><td>81.9 (11)</td><td>73.4 (11)</td><td>68.3 (7)</td><td>4.1 (16)</td><td>57.3 (15)</td><td>70 (10)</td></tr>
+          <tr><td>CONCH&nbsp;1.5</td><td>Histopathology</td><td>VLM</td><td>79.9 (8)</td><td>82.4 (10)</td><td>75.0 (7)</td><td>68.8 (4)</td><td>4.6 (20)</td><td>75.8 (26)</td><td>75 (11)</td></tr>
+          <tr><td>KEEP</td><td>Histopathology</td><td>VLM</td><td>81.5 (4)</td><td>83.2 (8)</td><td>77.1 (4)</td><td>68.0 (8)</td><td>4.0 (15)</td><td>44.9 (11)</td><td>50 (6)</td></tr>
+          <tr><td>MUSK</td><td>Histopathology</td><td>VLM</td><td>77.7 (12)</td><td>81.1 (13)</td><td>71.9 (12)</td><td>65.1 (14)</td><td>4.0 (14)</td><td>71.9 (25)</td><td>90 (13)</td></tr>
+          <tr><td>PLIP</td><td>Histopathology</td><td>VLM</td><td>70.2 (21)</td><td>74.0 (23)</td><td>64.1 (19)</td><td>58.5 (25)</td><td>4.5 (18)</td><td>60.8 (17)</td><td>123 (19)</td></tr>
+          <tr><td>QUILTNET</td><td>Histopathology</td><td>VLM</td><td>70.4 (20)</td><td>73.9 (24)</td><td>65.6 (17)</td><td>58.9 (24)</td><td>5.8 (25)</td><td>55.6 (14)</td><td>124 (20)</td></tr>
+          <tr><td>DINOv2-B</td><td>Natural-image</td><td>VM</td><td>69.0 (23)</td><td>76.6 (20)</td><td>60.2 (21)</td><td>59.8 (22)</td><td>5.0 (24)</td><td>66.1 (20)</td><td>130 (22)</td></tr>
+          <tr><td>DINOv2-L</td><td>Natural-image</td><td>VM</td><td>70.6 (18)</td><td>77.0 (19)</td><td>58.7 (22)</td><td>59.6 (23)</td><td>4.9 (22)</td><td>64.4 (19)</td><td>123 (19)</td></tr>
+          <tr><td>ViT-B/16</td><td>Natural-image</td><td>VM</td><td>66.2 (24)</td><td>74.7 (22)</td><td>57.3 (24)</td><td>61.0 (20)</td><td>4.0 (13)</td><td>47.0 (12)</td><td>115 (18)</td></tr>
+          <tr><td>ViT-L/16</td><td>Natural-image</td><td>VM</td><td>69.3 (22)</td><td>75.5 (21)</td><td>56.9 (25)</td><td>63.1 (17)</td><td>4.3 (17)</td><td>43.9 (10)</td><td>112 (17)</td></tr>
+          <tr><td>CLIP-B/32</td><td>Natural-image</td><td>VLM</td><td>63.0 (26)</td><td>68.8 (26)</td><td>52.3 (26)</td><td>56.0 (26)</td><td>4.9 (23)</td><td>63.6 (18)</td><td>145 (23)</td></tr>
+          <tr><td>CLIP-L/14</td><td>Natural-image</td><td>VLM</td><td>65.7 (25)</td><td>73.6 (25)</td><td>58.1 (23)</td><td>60.8 (21)</td><td>3.8 (8)</td><td>70.5 (24)</td><td>126 (21)</td></tr>
+          <tr><td>DINOv3-B</td><td>Natural-image</td><td>VM</td><td>70.6 (19)</td><td>77.4 (17)</td><td>64.8 (18)</td><td>63.4 (16)</td><td>3.7 (6)</td><td>70.1 (23)</td><td>99 (16)</td></tr>
+          <tr><td>DINOv3-S</td><td>Natural-image</td><td>VM</td><td>72.0 (16)</td><td>77.1 (18)</td><td>65.7 (16)</td><td>62.0 (19)</td><td>2.8 (1)</td><td>66.9 (21)</td><td>91 (14)</td></tr>
+          <tr><td>DINOv3-L</td><td>Natural-image</td><td>VM</td><td>71.5 (17)</td><td>77.9 (16)</td><td>61.8 (20)</td><td>62.6 (18)</td><td>3.0 (3)</td><td>68.9 (22)</td><td>96 (15)</td></tr>
+
+        <tbody>
+    </table>
+</div>
+
+---
+
+## 🏆 Original (paper) Rank-sum Leaderboard
+
+This leaderboard exactly reproduces the rank-sum table (Table 4) presented in our original [paper](https://arxiv.org/abs/2507.07860). 
+
+<div class="table-responsive-sm">
+  <table id="ranksumTableOriginal" class="table table-hover table-bordered table-sm nowrap">
     <thead class="align-middle text-center">
       <tr>
         <th>Model</th>
@@ -55,7 +118,7 @@ title: Leaderboards
 
 ---
 
-# 🏆 SPIDER Leaderboard
+## 🏆 SPIDER Leaderboard
 
 F1-score on test sets of SPIDER datasets and average across datasets for the *knn* and *linear probing* tasks. The considered datasets are:
 
@@ -109,7 +172,7 @@ F1-score on test sets of SPIDER datasets and average across datasets for the *kn
 
 ---
 
-# 🏆 Zero-shot VLM Classification Leaderboard
+## 🏆 Zero-shot VLM Classification Leaderboard
 
 F1-score on test sets of all supported datasets and average across datasets for the *zero-shot classification* task. Only VLM models with publicly released patch-level text encoders are included.
 
