@@ -39,7 +39,7 @@ TAGS_FILENAMES = {
     "provgigapath": (
         "prov-gigapath/prov-gigapath",
         "pytorch_model.bin",
-    ), # GigaPath (https://huggingface.co/prov-gigapath/prov-gigapath)
+    ),  # GigaPath (https://huggingface.co/prov-gigapath/prov-gigapath)
     "conch": (
         "MahmoodLab/conch",
         "pytorch_model.bin",

@@ -108,7 +108,9 @@ def get_model(model_cfg: dict, device: str):
         if model_cfg.model_name == "musk":
             model, transform, tokenizer = get_musk(model_cfg.ckpt_path)
         elif model_cfg.model_name == "provgigapath":
-            model, transform = get_prov_gigapath(model_cfg.ckpt_path, device)
+            model, transform = get_prov_gigapath(
+                model_cfg.hf_tag, model_cfg.ckpt_path, device
+            )
         else:
             model, transform = get_from_timm(
                 model_cfg.hf_tag, timm_kwargs, model_cfg.ckpt_path, device
@@ -522,7 +524,7 @@ def get_from_safetensors(ckpt_path: str, use_fast: str = False):
     return model, transform, tokenizer
 
 
-def get_prov_gigapath(ckpt_path: str,  device: str):
+def get_prov_gigapath(hf_tag: str, ckpt_path: str, device: str):
     """
     Adapted from:
     - https://huggingface.co/prov-gigapath/prov-gigapath
@@ -532,7 +534,7 @@ def get_prov_gigapath(ckpt_path: str,  device: str):
     from torchvision import transforms
 
     model = timm.create_model(
-        "hf_hub:prov-gigapath/prov-gigapath",
+        hf_tag,
         pretrained=False,
     )
 
@@ -555,6 +557,7 @@ def get_prov_gigapath(ckpt_path: str,  device: str):
     )
 
     return model, transform
+
 
 def get_keep(ckpt_path: str):
     """
