@@ -3,6 +3,8 @@ import json
 import logging
 import os
 import random
+import subprocess
+import sys
 from typing import Any, Dict, Optional
 
 import h5py
@@ -10,8 +12,6 @@ import numpy as np
 import torch
 import wandb
 from omegaconf import DictConfig, OmegaConf
-
-import sys
 
 
 def print_task_hyperparams(cfg: DictConfig, custom_name: Optional[str] = None) -> None:
@@ -242,3 +242,20 @@ def wb_mask(
         )
         mask_list.append(mask)
     return mask_list
+
+
+def wget_download(url: str, directory: str) -> None:
+    """
+    Downloading data with wget.
+    :param url: data url.
+    :param directory: download directory.
+    """
+    # Define the wget command
+    command = [
+        "wget",
+        url,
+        "--directory-prefix",
+        f"{directory}",
+    ]
+    # Execute the command
+    subprocess.run(command, check=True)

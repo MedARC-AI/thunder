@@ -3,6 +3,8 @@ import os
 from pathlib import Path
 from typing import List, Union
 
+from ..utils.utils import wget_download
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -40,6 +42,22 @@ TAGS_FILENAMES = {
         "prov-gigapath/prov-gigapath",
         "pytorch_model.bin",
     ),  # GigaPath (https://huggingface.co/prov-gigapath/prov-gigapath)
+    "kaiko_vits8": (
+        "kaiko_vits8",
+        "https://github.com/kaiko-ai/towards_large_pathology_fms/releases/download/0.0.1/vits8.pth",
+    ),  # Kaiko-VitS8 (https://github.com/kaiko-ai/towards_large_pathology_fms/releases)
+    "kaiko_vits16": (
+        "kaiko_vits16",
+        "https://github.com/kaiko-ai/towards_large_pathology_fms/releases/download/0.0.1/vits16.pth",
+    ),  # Kaiko-VitS16 (https://github.com/kaiko-ai/towards_large_pathology_fms/releases)
+    "kaiko_vitb8": (
+        "kaiko_vitb8",
+        "https://github.com/kaiko-ai/towards_large_pathology_fms/releases/download/0.0.1/vitb8.pth",
+    ),  # Kaiko-VitB8 (https://github.com/kaiko-ai/towards_large_pathology_fms/releases)
+    "kaiko_vitb16": (
+        "kaiko_vitb16",
+        "https://github.com/kaiko-ai/towards_large_pathology_fms/releases/download/0.0.1/vitb16.pth",
+    ),  # Kaiko-VitB16 (https://github.com/kaiko-ai/towards_large_pathology_fms/releases)
     "conch": (
         "MahmoodLab/conch",
         "pytorch_model.bin",
@@ -186,9 +204,13 @@ def download_model(model: str) -> None:
 
     try:
         logging.info(f"Downloading {filename} from {tag} to {local_dir}...")
-        hf_hub_download(
-            tag, filename=filename, local_dir=local_dir, force_download=True
-        )
+
+        if not "kaiko_vit" in model:
+            hf_hub_download(
+                tag, filename=filename, local_dir=local_dir, force_download=True
+            )
+        else:
+            wget_download(filename, local_dir)
 
         if filename == "model.safetensors" or (
             filename == "pytorch_model.bin"
@@ -241,22 +263,10 @@ def download_model(model: str) -> None:
                 )
 
         if local_dir_tag == "musk":
-            import subprocess
-
-            # Define the wget command
-            command = [
-                "wget",
+            wget_download(
                 "https://github.com/lilab-stanford/MUSK/raw/main/musk/models/tokenizer.spm",
-                "--directory-prefix",
-                f"{local_dir}",
-            ]
-            # Execute the command
-            try:
-                subprocess.run(command, check=True)
-            except:
-                raise RuntimeError(
-                    "wget is needed to download MUSK tokenizer config file."
-                )
+                local_dir,
+            )
 
         logging.info(f"Successfully downloaded {filename} from {tag}.")
 

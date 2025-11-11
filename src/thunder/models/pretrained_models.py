@@ -111,6 +111,10 @@ def get_model(model_cfg: dict, device: str):
             model, transform = get_prov_gigapath(
                 model_cfg.hf_tag, model_cfg.ckpt_path, device
             )
+        elif "kaiko_vit" in model_cfg.model_name:
+            model, transform = get_kaiko(
+                model_cfg.timm_tag, timm_kwargs, model_cfg.ckpt_path, device
+            )
         else:
             model, transform = get_from_timm(
                 model_cfg.hf_tag, timm_kwargs, model_cfg.ckpt_path, device
@@ -391,6 +395,10 @@ def get_model_from_name(model_name: str, device: str):
         * hiboub
         * hiboul
         * midnight
+        * kaiko_vits8
+        * kaiko_vits16
+        * kaiko_vitb8
+        * kaiko_vitb16
         * keep
         * quiltb32
         * plip
@@ -522,6 +530,46 @@ def get_from_safetensors(ckpt_path: str, use_fast: str = False):
         tokenizer = None
 
     return model, transform, tokenizer
+
+
+def get_kaiko(timm_tag: str, timm_kwargs: dict, ckpt_path: str, device: str):
+    """
+    Adapted from:
+    - https://github.com/kaiko-ai/towards_large_pathology_fms
+
+    :param timm_tag: timm model tag.
+    :param timm_kargs: dictionary of timm arguments.
+    :param ckpt_path: path to the stored checkpoint.
+    :param device: device to use (cpu, cuda).
+    """
+    from torchvision.transforms import v2
+
+    # Model
+    model = timm.create_model(
+        timm_tag,
+        pretrained=False,
+        **timm_kwargs,
+    )
+    model.load_state_dict(
+        torch.load(ckpt_path, weights_only=True, map_location=torch.device(device)),
+        strict=True,
+    )
+
+    # Transform
+    transform = v2.Compose(
+        [
+            v2.ToImage(),
+            v2.Resize(size=224),
+            v2.CenterCrop(size=224),
+            v2.ToDtype(torch.float32, scale=True),
+            v2.Normalize(
+                mean=(0.5, 0.5, 0.5),
+                std=(0.5, 0.5, 0.5),
+            ),
+        ]
+    )
+
+    return model, transform
 
 
 def get_prov_gigapath(hf_tag: str, ckpt_path: str, device: str):
