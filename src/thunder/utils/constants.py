@@ -15,6 +15,7 @@ class ModelConstants(Enum):
         "uni2h",
         "virchow",
         "virchow2",
+        "provgigapath",
         # Histo-image-language models
         "conch",
         "titan",

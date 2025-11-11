@@ -36,6 +36,10 @@ TAGS_FILENAMES = {
         "bioptimus/H-optimus-1",
         "pytorch_model.bin",
     ),  # H-optimus 1 (https://huggingface.co/bioptimus/H-optimus-1)
+    "provgigapath": (
+        "prov-gigapath/prov-gigapath",
+        "pytorch_model.bin",
+    ), # GigaPath (https://huggingface.co/prov-gigapath/prov-gigapath)
     "conch": (
         "MahmoodLab/conch",
         "pytorch_model.bin",

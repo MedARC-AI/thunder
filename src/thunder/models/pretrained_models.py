@@ -107,6 +107,8 @@ def get_model(model_cfg: dict, device: str):
 
         if model_cfg.model_name == "musk":
             model, transform, tokenizer = get_musk(model_cfg.ckpt_path)
+        elif model_cfg.model_name == "provgigapath":
+            model, transform = get_prov_gigapath(model_cfg.ckpt_path, device)
         else:
             model, transform = get_from_timm(
                 model_cfg.hf_tag, timm_kwargs, model_cfg.ckpt_path, device
@@ -379,6 +381,7 @@ def get_model_from_name(model_name: str, device: str):
         * virchow2
         * hoptimus0
         * hoptimus1
+        * provgigapath
         * conch
         * titan
         * phikon
@@ -518,6 +521,40 @@ def get_from_safetensors(ckpt_path: str, use_fast: str = False):
 
     return model, transform, tokenizer
 
+
+def get_prov_gigapath(ckpt_path: str,  device: str):
+    """
+    Adapted from:
+    - https://huggingface.co/prov-gigapath/prov-gigapath
+
+    Loads the Prov-GigaPath timm model from Hugging Face Hub.
+    """
+    from torchvision import transforms
+
+    model = timm.create_model(
+        "hf_hub:prov-gigapath/prov-gigapath",
+        pretrained=False,
+    )
+
+    model.load_state_dict(
+        torch.load(ckpt_path, weights_only=True, map_location=torch.device(device)),
+        strict=True,
+    )
+
+    # Transform
+    transform = transforms.Compose(
+        [
+            transforms.Resize(256, interpolation=transforms.InterpolationMode.BICUBIC),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(
+                mean=(0.485, 0.456, 0.406),
+                std=(0.229, 0.224, 0.225),
+            ),
+        ]
+    )
+
+    return model, transform
 
 def get_keep(ckpt_path: str):
     """
