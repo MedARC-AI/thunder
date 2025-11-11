@@ -53,8 +53,13 @@ def segpath(base_folder: str, dataset_cfg: dict, cell_type: str) -> None:
     """
     import pandas as pd
 
-    from ..data_splits import (check_dataset, compute_patches, init_dict,
-                               save_dict, sorted_listdir)
+    from ..data_splits import (
+        check_dataset,
+        compute_patches,
+        init_dict,
+        save_dict,
+        sorted_listdir,
+    )
 
     # Initializing dict
     segpath_data_splits = init_dict()

@@ -16,8 +16,13 @@ def create_splits_ocelot(base_folder: str, dataset_cfg: dict) -> None:
 
     import os
 
-    from ..data_splits import (check_dataset, compute_patches, init_dict,
-                               save_dict, sorted_listdir)
+    from ..data_splits import (
+        check_dataset,
+        compute_patches,
+        init_dict,
+        save_dict,
+        sorted_listdir,
+    )
 
     # Initializing dict
     ocelot_data_splits = init_dict()

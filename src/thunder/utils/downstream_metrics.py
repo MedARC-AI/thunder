@@ -3,8 +3,13 @@ from typing import Callable, Union
 import numpy as np
 import torch
 from scipy.stats import bootstrap
-from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score,
-                             jaccard_score, roc_auc_score)
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    f1_score,
+    jaccard_score,
+    roc_auc_score,
+)
 
 from ..utils.constants import UtilsConstants
 

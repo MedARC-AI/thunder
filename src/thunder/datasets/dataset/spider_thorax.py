@@ -3,6 +3,7 @@ from huggingface_hub import snapshot_download
 
 def download_spider_thorax(root_folder: str):
     import subprocess
+
     from huggingface_hub import snapshot_download
 
     snapshot_download(
@@ -64,9 +65,13 @@ def create_splits_spider_thorax(base_folder: str, dataset_cfg: dict) -> None:
 
     from ...utils.constants import UtilsConstants
     from ...utils.utils import set_seed
-    from ..data_splits import (check_dataset, create_few_shot_training_data,
-                               get_data_from_folder_recursive, init_dict,
-                               save_dict)
+    from ..data_splits import (
+        check_dataset,
+        create_few_shot_training_data,
+        get_data_from_folder_recursive,
+        init_dict,
+        save_dict,
+    )
 
     # Setting the random seed
     set_seed(UtilsConstants.DEFAULT_SEED.value)

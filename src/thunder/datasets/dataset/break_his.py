@@ -19,8 +19,13 @@ def create_splits_break_his(base_folder: str, dataset_cfg: dict) -> None:
 
     from ...utils.constants import UtilsConstants
     from ...utils.utils import set_seed
-    from ..data_splits import (check_dataset, create_few_shot_training_data,
-                               init_dict, save_dict, sorted_listdir)
+    from ..data_splits import (
+        check_dataset,
+        create_few_shot_training_data,
+        init_dict,
+        save_dict,
+        sorted_listdir,
+    )
 
     # Setting the random seed
     set_seed(UtilsConstants.DEFAULT_SEED.value)

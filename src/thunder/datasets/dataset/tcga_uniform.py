@@ -55,8 +55,13 @@ def create_splits_tcga_uniform(base_folder: str, dataset_cfg: dict) -> None:
 
     from ...utils.constants import UtilsConstants
     from ...utils.utils import set_seed
-    from ..data_splits import (check_dataset, create_few_shot_training_data,
-                               init_dict, save_dict, sorted_listdir)
+    from ..data_splits import (
+        check_dataset,
+        create_few_shot_training_data,
+        init_dict,
+        save_dict,
+        sorted_listdir,
+    )
 
     # Setting the random seed
     set_seed(UtilsConstants.DEFAULT_SEED.value)
@@ -148,8 +153,10 @@ def get_class_images(image_folders: list, curr_folder: str, class_folder: str) -
     :param class_folder: name of the class folder.
     :return: list of image filenames.
     """
-    from ..data_splits import sorted_listdir
     import os
+
+    from ..data_splits import sorted_listdir
+
     class_images = []
     for image_folder in image_folders:
         ims = sorted_listdir(os.path.join(curr_folder, image_folder))

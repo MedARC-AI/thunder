@@ -89,17 +89,28 @@ def generate_splits_for_dataset(dataset_name: str) -> None:
     from omegaconf import OmegaConf
 
     from ..utils.constants import DatasetConstants
-    from .dataset import (create_splits_bach, create_splits_bracs,
-                          create_splits_break_his, create_splits_ccrcc,
-                          create_splits_crc, create_splits_esca,
-                          create_splits_mhist, create_splits_ocelot,
-                          create_splits_pannuke, create_splits_patch_camelyon,
-                          create_splits_segpath_epithelial,
-                          create_splits_segpath_lymphocytes,
-                          create_splits_tcga_crc_msi, create_splits_tcga_tils,
-                          create_splits_tcga_uniform, create_splits_wilds, 
-                          create_splits_spider_breast, create_splits_spider_colorectal,
-                          create_splits_spider_skin, create_splits_spider_thorax)
+    from .dataset import (
+        create_splits_bach,
+        create_splits_bracs,
+        create_splits_break_his,
+        create_splits_ccrcc,
+        create_splits_crc,
+        create_splits_esca,
+        create_splits_mhist,
+        create_splits_ocelot,
+        create_splits_pannuke,
+        create_splits_patch_camelyon,
+        create_splits_segpath_epithelial,
+        create_splits_segpath_lymphocytes,
+        create_splits_spider_breast,
+        create_splits_spider_colorectal,
+        create_splits_spider_skin,
+        create_splits_spider_thorax,
+        create_splits_tcga_crc_msi,
+        create_splits_tcga_tils,
+        create_splits_tcga_uniform,
+        create_splits_wilds,
+    )
 
     DATASET_TO_FUNCTION = {
         # Classification
@@ -333,7 +344,9 @@ def get_data_from_set(dataset_folder: str, set_name: str, dataset_cfg: dict) -> 
     return images, labels
 
 
-def get_data_from_folder_recursive(dataset_folder: str, set_name: str, dataset_cfg: dict) -> list:
+def get_data_from_folder_recursive(
+    dataset_folder: str, set_name: str, dataset_cfg: dict
+) -> list:
     """
     Retrieving images and labels from a folder recursively.
 

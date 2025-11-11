@@ -1,8 +1,12 @@
 import os
+
 from wilds import get_dataset
 
+
 def download_wilds(root_folder: str):
-    get_dataset(dataset="camelyon17", download=True, root_dir=os.path.join(root_folder, "data"))
+    get_dataset(
+        dataset="camelyon17", download=True, root_dir=os.path.join(root_folder, "data")
+    )
 
 
 def create_splits_wilds(base_folder: str, dataset_cfg: dict) -> None:
@@ -15,8 +19,12 @@ def create_splits_wilds(base_folder: str, dataset_cfg: dict) -> None:
 
     from ...utils.constants import UtilsConstants
     from ...utils.utils import set_seed
-    from ..data_splits import (check_dataset, create_few_shot_training_data,
-                               init_dict, save_dict)
+    from ..data_splits import (
+        check_dataset,
+        create_few_shot_training_data,
+        init_dict,
+        save_dict,
+    )
 
     # Setting the random seed
     set_seed(UtilsConstants.DEFAULT_SEED.value)
