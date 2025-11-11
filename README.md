@@ -6,6 +6,7 @@
 <div align="center">
 
 [![Paper](https://img.shields.io/badge/THUNDER-arXiv.2507.07860-purple.svg)](https://arxiv.org/abs/2507.07860)
+[![PyPI](https://img.shields.io/pypi/v/thunder-bench.svg)](https://pypi.org/project/thunder-bench/)
 [![Python application](https://github.com/MICS-lab/thunder/actions/workflows/ci.yml/badge.svg)](https://github.com/MICS-lab/thunder/actions/workflows/ci.yml)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-blue)](https://mics-lab.github.io/thunder/)
 [![License](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://github.com/MICS-Lab/thunder/blob/main/LICENSE)
