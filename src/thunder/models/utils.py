@@ -16,6 +16,19 @@ def is_model_available(model_name: str) -> bool:
     return os.path.exists(os.path.join(models_dir, model_name))
 
 
+def load_custom_dataset_from_file(yaml_file: str):
+    """
+    Loading a dataset from a yaml file.
+
+    :param yaml_file: path to the dataset config yaml file.
+    """
+    from omegaconf import OmegaConf
+
+    dataset_cfg = OmegaConf.load(yaml_file)
+
+    return dataset_cfg
+
+
 def load_custom_model_from_file(python_file: str):
     """
     Loading a model that inherits from the PretrainedModel abstract from a python file.

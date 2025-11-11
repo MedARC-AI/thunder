@@ -5,6 +5,7 @@ import os
 from collections import defaultdict
 
 import numpy as np
+from omegaconf import DictConfig
 from tqdm import tqdm
 
 from ..tasks.image_retrieval import topk_retrieval
@@ -14,6 +15,7 @@ from ..utils.utils import log_metrics, save_outputs
 
 
 def simple_shot(
+    cfg: DictConfig,
     dataset_name: str,
     base_data_folder: str,
     train_embs: np.array,
@@ -24,6 +26,8 @@ def simple_shot(
 ) -> None:
     """
     Performing few-shot classification with SimpleShot (https://arxiv.org/abs/1911.04623).
+
+    :param cfg: configuration file (hydra config).
     :param dataset_name: name of the dataset.
     :param base_data_folder: base folder storing data.
     :param train_embs: embeddings of training samples.
@@ -33,7 +37,14 @@ def simple_shot(
     :param wandb_base_folder: w&b folder.
     """
     # Loading data
-    data = get_data(dataset_name, base_data_folder)
+    data = get_data(
+        (
+            dataset_name
+            if not hasattr(cfg.dataset, "data_splits")
+            else cfg.dataset.data_splits
+        ),
+        base_data_folder,
+    )
     few_shot_data = data["train_few_shot"]
     nb_shots = few_shot_data.keys()
     simple_shot_metrics = {}

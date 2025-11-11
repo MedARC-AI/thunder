@@ -57,7 +57,7 @@ class DINOv2Features(PretrainedModel):
 With this file ready, you can run any benchmark task using the following command:
 
 ```console
-thunder benchmark custom:my_model.py db_name task_name
+thunder benchmark custom:/path/to/my_model.py db_name task_name
 ```
 
 or through the API:

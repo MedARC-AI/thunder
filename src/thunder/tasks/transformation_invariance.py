@@ -98,7 +98,14 @@ def transformation_invariance(
     # ---------------------------------------------------------------------
     # Loading training and validation datasets
     # ---------------------------------------------------------------------
-    data_paths = get_data(dataset_name, base_data_folder)
+    data_paths = get_data(
+        (
+            dataset_name
+            if not hasattr(cfg.dataset, "data_splits")
+            else cfg.dataset.data_splits
+        ),
+        base_data_folder,
+    )
 
     train_ds = PatchDataset(
         data_paths["train"]["images"],
@@ -110,6 +117,7 @@ def transformation_invariance(
         embeddings_folder=None,
         image_pre_loading=image_pre_loading,
         embedding_pre_loading=False,
+        h5_format=cfg.dataset.h5_format if hasattr(cfg.dataset, "h5_format") else False,
     )
 
     val_ds = PatchDataset(
@@ -122,6 +130,7 @@ def transformation_invariance(
         embeddings_folder=None,
         image_pre_loading=image_pre_loading,
         embedding_pre_loading=False,
+        h5_format=cfg.dataset.h5_format if hasattr(cfg.dataset, "h5_format") else False,
     )
 
     train_val_ds = ConcatDataset([train_ds, val_ds])

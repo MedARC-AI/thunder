@@ -24,6 +24,7 @@ nav:
   - Tutorials:
     - Getting Started: getting_started.md
     - Benchmarking a Custom Model: custom_model.md
+    - Benchmarking on a Custom Dataset: custom_dataset.md
     - Overriding Configurations: custom_config.md
     - Using foundation models on your data: get_model.md
   - API: api.md

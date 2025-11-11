@@ -16,16 +16,26 @@ from ..utils.constants import DatasetConstants
 def get_data(dataset_name: str, base_data_folder: str) -> dict:
     """
     Getting data (train and test) for the specific dataset.
-    :param dataset_name: name of the dataset to retrieve information from.
+    :param dataset_name: name of the dataset to retrieve information from (can be overriden with path to json splits file for custom dataset).
     :param base_data_folder: base path where data is stored.
     :return data dictionary.
     """
-    assert (
-        dataset_name in DatasetConstants.DATASETS.value
-    ), f"{dataset_name} is not within the list of available datasets: {DatasetConstants.DATASETS.value}."
 
-    # Reading json data file
-    data_path = os.path.join(base_data_folder, "data_splits", f"{dataset_name}.json")
+    if not dataset_name.endswith(".json"):
+        assert (
+            dataset_name in DatasetConstants.DATASETS.value
+        ), f"{dataset_name} is not within the list of available datasets: {DatasetConstants.DATASETS.value}."
+
+        assert (
+            base_data_folder is not None
+        ), f"base_data_folder should be specified for supported datasets."
+
+        # Reading json data file
+        data_path = os.path.join(
+            base_data_folder, "data_splits", f"{dataset_name}.json"
+        )
+    else:
+        data_path = dataset_name
     with open(data_path, "r") as file:
         data = json.load(file)
 
@@ -73,6 +83,7 @@ class PatchDataset(Dataset):
         image_pre_loading: bool = False,
         embedding_pre_loading: bool = False,
         div_patches: bool = False,
+        h5_format: bool = False,
     ) -> None:
         """
         Initializing dataset information.
@@ -86,6 +97,7 @@ class PatchDataset(Dataset):
         :param image_pre_loading: whether to pre-load all images.
         :param embedding_pre_loading: whether to pre-load all embeddings.
         :param div_patches: whether to divide image into patches (instead of using full image).
+        :param h5_format: whether images and labels are stored in h5 format.
         """
         self.images = images
         self.labels = labels
@@ -96,43 +108,49 @@ class PatchDataset(Dataset):
         self.image_pre_loading = image_pre_loading
         self.embedding_pre_loading = embedding_pre_loading
         self.div_patches = div_patches
+        self.h5_format = h5_format
 
-        if dataset_name == "patch_camelyon" and not embedding_pre_loading:
-            self.images = h5py.File(
-                os.path.join(self.base_data_folder, self.dataset_name, self.images), "r"
-            )
-            self.labels = h5py.File(
-                os.path.join(self.base_data_folder, self.dataset_name, self.labels), "r"
-            )
-            self.images = np.array(self.images.get("x"))
-            self.labels = np.array(self.labels.get("y")).reshape((-1))
-        elif dataset_name == "pannuke":
-            self.images = np.load(
-                os.path.join(
-                    self.base_data_folder,
-                    self.dataset_name,
-                    self.images,
-                ),
-                "r",
-            )
-            masks = np.load(
-                os.path.join(
-                    self.base_data_folder,
-                    self.dataset_name,
-                    self.labels,
-                ),
-                "r",
-            )
+        if (self.h5_format and not embedding_pre_loading) or dataset_name == "pannuke":
+            if self.base_data_folder is not None:
+                images_path = os.path.join(
+                    self.base_data_folder, self.dataset_name, self.images
+                )
+            else:
+                images_path = self.images
 
-            # Adapted from https://github.com/TIO-IKIM/CellViT/blob/main/cell_segmentation/datasets/prepare_pannuke.py#L61-L64
-            self.labels = np.zeros((masks.shape[0], 256, 256)).astype(np.int32)
-            for i in range(masks.shape[0]):
-                for j in range(5):
-                    layer_res = ((j + 1) * np.clip(masks[i, :, :, j], 0, 1)).astype(
-                        np.int32
-                    )
-                    self.labels[i] = np.where(layer_res != 0, layer_res, self.labels[i])
-            self.labels = torch.Tensor(self.labels).to(torch.int64)
+            if self.base_data_folder is not None:
+                labels_path = os.path.join(
+                    self.base_data_folder, self.dataset_name, self.labels
+                )
+            else:
+                labels_path = self.labels
+
+            if self.h5_format and not embedding_pre_loading:
+                self.images = h5py.File(images_path, "r")
+                self.labels = h5py.File(labels_path, "r")
+                self.images = np.array(self.images.get("x"))
+                self.labels = np.array(self.labels.get("y")).reshape((-1))
+            elif dataset_name == "pannuke":
+                self.images = np.load(
+                    images_path,
+                    "r",
+                )
+                masks = np.load(
+                    labels_path,
+                    "r",
+                )
+
+                # Adapted from https://github.com/TIO-IKIM/CellViT/blob/main/cell_segmentation/datasets/prepare_pannuke.py#L61-L64
+                self.labels = np.zeros((masks.shape[0], 256, 256)).astype(np.int32)
+                for i in range(masks.shape[0]):
+                    for j in range(5):
+                        layer_res = ((j + 1) * np.clip(masks[i, :, :, j], 0, 1)).astype(
+                            np.int32
+                        )
+                        self.labels[i] = np.where(
+                            layer_res != 0, layer_res, self.labels[i]
+                        )
+                self.labels = torch.Tensor(self.labels).to(torch.int64)
 
         if image_pre_loading:
             for i in range(len(self.images)):
@@ -203,9 +221,11 @@ class PatchDataset(Dataset):
             ) = self.labels[index]
 
             # Loading mask array and transforming to torch tensor
-            label = Image.open(
-                os.path.join(self.base_data_folder, self.dataset_name, label_path)
-            )
+            if self.base_data_folder is not None:
+                label_path = os.path.join(
+                    self.base_data_folder, self.dataset_name, label_path
+                )
+            label = Image.open(label_path)
             # Sampling patch in WSI
             label = F.pil_to_tensor(label)
             label = label[
@@ -260,14 +280,16 @@ class PatchDataset(Dataset):
             ) = self.images[index]
 
         # Loading image
-        if self.dataset_name == "patch_camelyon":
+        if self.h5_format:
             image = Image.fromarray(image_path)
         elif self.dataset_name == "pannuke":
             image = self.images[index]
         else:
-            image = Image.open(
-                os.path.join(self.base_data_folder, self.dataset_name, image_path)
-            ).convert("RGB")
+            if self.base_data_folder is not None:
+                image_path = os.path.join(
+                    self.base_data_folder, self.dataset_name, image_path
+                )
+            image = Image.open(image_path).convert("RGB")
 
         if self.task_type == "segmentation":
             if self.dataset_name != "pannuke":

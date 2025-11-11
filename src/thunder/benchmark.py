@@ -8,7 +8,11 @@ import hydra
 from omegaconf import DictConfig
 
 from .datasets.utils import is_dataset_available
-from .models.utils import is_model_available, load_custom_model_from_file
+from .models.utils import (
+    is_model_available,
+    load_custom_dataset_from_file,
+    load_custom_model_from_file,
+)
 from .utils.utils import print_task_hyperparams, save_config
 
 
@@ -57,6 +61,10 @@ def benchmark(
     model_name = model if isinstance(model, str) else None
     custom_name = None
 
+    if dataset.startswith("custom:"):
+        dataset_cfg = load_custom_dataset_from_file(dataset.split(":")[1])
+        dataset = None
+
     if model_name and model_name.startswith("custom:"):
         model = load_custom_model_from_file(model_name.split(":")[1])
         model_name = None
@@ -76,9 +84,14 @@ def benchmark(
         **kwargs,
     )
 
+    # Adding custom dataset information
+    if dataset is None:
+        OmegaConf.set_struct(cfg, False)
+        cfg.dataset = dataset_cfg
+
     print_task_hyperparams(cfg, custom_name=custom_name)
 
-    if not is_dataset_available(dataset):
+    if dataset and not is_dataset_available(dataset):
         from . import download_datasets
 
         download_datasets(dataset, make_splits=True)
@@ -126,7 +139,11 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Checking task, data and adaptation are compatible
-    base_data_folder = cfg.dataset.base_data_folder
+    base_data_folder = (
+        cfg.dataset.base_data_folder
+        if hasattr(cfg.dataset, "base_data_folder")
+        else None
+    )
     base_embeddings_folder = cfg.task.base_embeddings_folder
     task_type = cfg.task.type
     task_compatible_adaptation_types = cfg.task.compatible_adaptation_types
@@ -199,7 +216,14 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
 
         # Loading data
         if not embedding_pre_loading or task_type == "segmentation":
-            data = get_data(dataset_name, base_data_folder)
+            data = get_data(
+                (
+                    dataset_name
+                    if not hasattr(cfg.dataset, "data_splits")
+                    else cfg.dataset.data_splits
+                ),
+                base_data_folder,
+            )
         else:
             data = None
 
@@ -345,6 +369,7 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
             elif task_type == "image_retrieval":
                 k_vals = cfg.task.k_vals
                 image_retrieval(
+                    cfg,
                     embs["train"],
                     labels["train"],
                     embs["test"],
@@ -366,6 +391,7 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
                 )
             elif task_type == "simple_shot":
                 simple_shot(
+                    cfg,
                     dataset_name,
                     base_data_folder,
                     embs["train"],

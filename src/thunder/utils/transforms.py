@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+import logging
 import random
 from typing import Callable, Dict, Tuple, Union
 
+import cv2
 import numpy as np
 import torch
 import torchvision.transforms.functional as F
 import torchvision.transforms.v2 as v2
 from PIL import Image
 from torchvision.transforms import ColorJitter, InterpolationMode
-import cv2
 
 try:
     import kornia.morphology as _kmorph
@@ -622,12 +623,6 @@ def _random_randstain(
     Code inspired from https://github.com/yiqings/RandStainNA/blob/master/randstainna.py
     """
 
-    if dataset_name not in randstain_constants:
-        raise ValueError(
-            f"Unknown dataset_name '{dataset_name}'. "
-            f"Available: {list(randstain_constants.keys())}"
-        )
-
     stats = randstain_constants[dataset_name]
 
     def _inner(img: _Image) -> Tuple[_Image, Dict]:
@@ -743,7 +738,7 @@ def get_invariance_transforms(
 
     :return: dictionary {name: transform callable}.
     """
-    return {
+    transforms_dict = {
         "identity": _identity,
         "random_flip": _random_flip(),
         "random_rotate": _random_rotate(),
@@ -752,7 +747,6 @@ def get_invariance_transforms(
         "random_color_jitter": _random_color_jitter(),
         "random_gamma": _random_gamma(),
         "random_hed": _random_hed(),
-        "random_randstain": _random_randstain(dataset_name),
         "random_cutout": _random_cutout(),
         "random_dilation": _random_dilation(),
         "random_erosion": _random_erosion(),
@@ -761,6 +755,17 @@ def get_invariance_transforms(
         "five_crop": _five_crop_random(),
         "elastic_transform": _elastic_transform(),
     }
+
+    if dataset_name not in randstain_constants:
+        logging.info(
+            f"RandStain transformation: Unknown dataset_name '{dataset_name}'. "
+            f"Available: {list(randstain_constants.keys())}. "
+            f"RandStain is not implemented for custom datasets (as it requires pre-computed dataset-specific statistics)."
+        )
+    else:
+        transforms_dict["random_randstain"] = _random_randstain(dataset_name)
+
+    return transforms_dict
 
 
 __all__ = ["get_invariance_transforms"]

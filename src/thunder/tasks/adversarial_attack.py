@@ -15,8 +15,12 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 import wandb
 from omegaconf import DictConfig
-from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score,
-                             jaccard_score)
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    f1_score,
+    jaccard_score,
+)
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
@@ -68,7 +72,14 @@ def adversarial_attack(
     if adaptation_type == "lora":
         raise ValueError("LoRA not supported for adversarial pixel attack; use frozen.")
 
-    data_paths = get_data(dataset_name, base_data_folder)
+    data_paths = get_data(
+        (
+            dataset_name
+            if not hasattr(cfg.dataset, "data_splits")
+            else cfg.dataset.data_splits
+        ),
+        base_data_folder,
+    )
     img_paths = data_paths["test"]["images"]
     label_paths = data_paths["test"]["labels"]
 
@@ -125,6 +136,9 @@ def adversarial_attack(
             embeddings_folder=None,
             image_pre_loading=image_pre_loading,
             embedding_pre_loading=False,
+            h5_format=(
+                cfg.dataset.h5_format if hasattr(cfg.dataset, "h5_format") else False
+            ),
         ),
         subset_indices,
     )

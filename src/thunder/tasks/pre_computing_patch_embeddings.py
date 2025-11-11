@@ -44,7 +44,14 @@ def pre_computing_patch_embeddings(
     :param embedding_pre_loading: whether to pre-load embeddings in dataloader.
     """
     # Loading data
-    data = get_data(dataset_name, base_data_folder)
+    data = get_data(
+        (
+            dataset_name
+            if not hasattr(cfg.dataset, "data_splits")
+            else cfg.dataset.data_splits
+        ),
+        base_data_folder,
+    )
 
     # Loading pretrained model
     if model_cls is not None:
@@ -75,6 +82,9 @@ def pre_computing_patch_embeddings(
             image_pre_loading,
             embedding_pre_loading,
             hasattr(cfg.dataset, "div_patches") and cfg.dataset.div_patches,
+            h5_format=(
+                cfg.dataset.h5_format if hasattr(cfg.dataset, "h5_format") else False
+            ),
         )
         split_dataloader = DataLoader(
             split_dataset,
@@ -135,13 +145,15 @@ def pre_computing_patch_embeddings_split(
     label_path = os.path.join(embeddings_folder, "labels.h5")
 
     # Open / create the files once.
-    with h5py.File(emb_path, "a", libver="latest") as emb_h5, h5py.File(
-        label_path, "a", libver="latest"
-    ) as lab_h5, (
-        h5py.File(text_aligned_emb_path, "a", libver="latest")
-        if id2classnames is not None
-        else nullcontext()
-    ) as text_aligned_emb_h5:
+    with (
+        h5py.File(emb_path, "a", libver="latest") as emb_h5,
+        h5py.File(label_path, "a", libver="latest") as lab_h5,
+        (
+            h5py.File(text_aligned_emb_path, "a", libver="latest")
+            if id2classnames is not None
+            else nullcontext()
+        ) as text_aligned_emb_h5,
+    ):
         next_idx = max((int(k) for k in emb_h5.keys()), default=-1) + 1
 
         for batch in tqdm(dataloader, desc="Extracting patch embeddings"):

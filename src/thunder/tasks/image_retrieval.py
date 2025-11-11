@@ -6,6 +6,7 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 import numpy as np
 import wandb
+from omegaconf import DictConfig
 from PIL import Image
 from tqdm import tqdm
 
@@ -104,6 +105,7 @@ def topk_retrieval(
 
 
 def image_retrieval(
+    cfg: DictConfig,
     train_embs: np.array,
     train_labels: np.array,
     test_embs: np.array,
@@ -119,6 +121,7 @@ def image_retrieval(
     Performing image retrieval where each test embedding is used as a
     query and each train embedding as a key. Reporting Acc@K and MVAcc@K (K=1,3,5,10).
 
+    :param cfg: configuration file (hydra config).
     :param train_embs: embeddings extracted from the training images with the pretrained model.
     :param train_labels: labels of training images.
     :param test_embs: embeddings extracted from the test images with the pretrained model.
@@ -144,18 +147,24 @@ def image_retrieval(
     )
 
     # Loading data
-    data = get_data(dataset_name, base_data_folder)
+    data = get_data(
+        (
+            dataset_name
+            if not hasattr(cfg.dataset, "data_splits")
+            else cfg.dataset.data_splits
+        ),
+        base_data_folder,
+    )
 
-    if dataset_name != "patch_camelyon":
+    if not (hasattr(cfg.dataset, "h5_format") and cfg.dataset.h5_format):
         # Figure
         fig, axs = plt.subplots(8, 11, figsize=(30, 20))
 
         for i, sample in enumerate(viz_data):
             query_path = data["test"]["images"][sample["query_path_idx"]]
-
-            query_im = Image.open(
-                os.path.join(base_data_folder, dataset_name, query_path)
-            ).convert("RGB")
+            if base_data_folder is not None:
+                query_path = os.path.join(base_data_folder, dataset_name, query_path)
+            query_im = Image.open(query_path).convert("RGB")
             axs[i, 0].imshow(query_im)
             axs[i, 0].grid(False)
             axs[i, 0].axis("off")
@@ -165,9 +174,9 @@ def image_retrieval(
             scores = sample["key_scores"]
             for j, key_idx in enumerate(key_idxs):
                 key_path = data["train"]["images"][key_idx]
-                key_im = Image.open(
-                    os.path.join(base_data_folder, dataset_name, key_path)
-                ).convert("RGB")
+                if base_data_folder is not None:
+                    key_path = os.path.join(base_data_folder, dataset_name, key_path)
+                key_im = Image.open(key_path).convert("RGB")
                 axs[i, j + 1].imshow(key_im)
                 axs[i, j + 1].grid(False)
                 axs[i, j + 1].axis("off")
@@ -181,7 +190,7 @@ def image_retrieval(
             pad_inches=0,
         )
     else:
-        logging.info("Retrieval samples are not visualized for path_camelyon.")
+        logging.info("Retrieval samples are not visualized for h5-format datasets.")
 
     # Logging
     for k in k_vals:
