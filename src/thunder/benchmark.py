@@ -70,6 +70,9 @@ def benchmark(
         model_name = None
         custom_name = model.name
 
+    if callable(model) and hasattr(model, "name"):
+        custom_name = model.name
+
     # Get Config
     cfg = get_config(
         task,
