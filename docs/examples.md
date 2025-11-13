@@ -11,7 +11,7 @@ As example, we will use **Hoptimus1** as the model, **MHIST** as the classificat
 
 ---
 
-## 1. View Benchmark Help
+## View Benchmark Help
 
 ### **CLI**
 
@@ -21,7 +21,7 @@ thunder benchmark --help
 
 ---
 
-## 2. Download Datasets
+## Download Datasets
 
 ### **CLI**
 
@@ -31,7 +31,7 @@ thunder download-datasets mhist pannuke
 
 ---
 
-## 3. Generate Data Splits
+## Generate Data Splits
 
 ### **CLI**
 
@@ -41,7 +41,7 @@ thunder generate-data-splits pannuke mhist
 
 ---
 
-## 4. Download Pretrained Models
+## Download Pretrained Models
 
 ### **CLI**
 
@@ -87,7 +87,7 @@ benchmark(
 
 ---
 
-## 6. K-NN Classification
+## K-NN Classification
 
 ### **CLI**
 
@@ -109,7 +109,7 @@ benchmark(
 
 ---
 
-## 7. Linear Probing
+## Linear Probing
 
 Using pre-loaded embeddings.
 
@@ -134,7 +134,7 @@ benchmark(
 
 ---
 
-## 8. Segmentation (PanNuke)
+## Segmentation 
 
 ### **CLI**
 
@@ -157,7 +157,7 @@ benchmark(
 
 ---
 
-## 9. SimpleShot Classification
+## SimpleShot Classification
 
 ### **CLI**
 
@@ -180,7 +180,7 @@ benchmark(
 
 ---
 
-## 10. Transformation Invariance
+## Transformation Invariance
 
 ### **CLI**
 
@@ -202,7 +202,7 @@ benchmark(
 
 ---
 
-## 11. Adversarial Attack Robustness
+## Adversarial Attack Robustness
 
 ### **CLI**
 
@@ -224,7 +224,7 @@ benchmark(
 
 ---
 
-# 12. Results Summary
+# Results Summary
 
 ### **CLI**
 
