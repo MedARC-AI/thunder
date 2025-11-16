@@ -1,3 +1,25 @@
+## [0.2.0] - 2025-11-16
+
+### Added
+- HistAI SPIDER datasets (breast, colorecal, skin, thorax)
+- Zero-shot VLM classification task
+- DINOv3, GIGAPATH, KAIKO-ViT foundation models
+- Option to benchmark a model for a task on a custom dataset
+- RandStain transformation for the transformation invariance task
+- SPIDER and zero-shot leaderboards + up-to-date rank-sum leaderboard
+- Option to divide bracs images into patches when extracting embeddings
+- Use-case examples in documentation
+- Saving a config file at the end of a benchmark run
+
+### Changed
+- Extended support to python versions >=3.10,<3.14
+- Updated dependency requirements and replaced setup.py with pyproject.toml
+- Loading all embeddings and labels as numpy arrays in dataset init for linear_probing+embedding_pre_loading
+
+### Fixed
+- Config setting for probe training with custom model
+- Hyper-parameters printing (colors and model name when custom)
+
 ## [0.1.1] - 2025-09-01
 
 ### Added
