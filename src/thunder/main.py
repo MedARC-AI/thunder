@@ -86,6 +86,7 @@ def benchmark(
     ] = False,
     kwargs: Annotated[List[str], typer.Argument(help="Additional arguments")] = None,
 ):
+    """Benchmark a model on a dataset for a task."""
     from . import benchmark
 
     if "THUNDER_BASE_DATA_FOLDER" not in os.environ:

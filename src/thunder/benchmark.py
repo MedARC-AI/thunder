@@ -1,19 +1,6 @@
-import logging
-import os
-import shutil
 from typing import Callable
 
-import h5py
-import hydra
 from omegaconf import DictConfig
-
-from .datasets.utils import is_dataset_available
-from .models.utils import (
-    is_model_available,
-    load_custom_dataset_from_file,
-    load_custom_model_from_file,
-)
-from .utils.utils import print_task_hyperparams, save_config
 
 
 def benchmark(
@@ -51,7 +38,14 @@ def benchmark(
     from hydra import compose, initialize
     from omegaconf import OmegaConf
 
+    from .datasets.utils import is_dataset_available
+    from .models.utils import (
+        is_model_available,
+        load_custom_dataset_from_file,
+        load_custom_model_from_file,
+    )
     from .utils.config import get_config
+    from .utils.utils import print_task_hyperparams
 
     wandb_mode = "online" if online_wandb else "offline"
     adaptation_type = "lora" if lora else "frozen"
@@ -119,6 +113,11 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
     :param cfg: config defining the job to run.
     """
 
+    import logging
+    import os
+    import shutil
+
+    import h5py
     import numpy as np
     import torch
     import wandb
@@ -136,7 +135,7 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
     from .utils.constants import UtilsConstants
     from .utils.data import get_data, h5_to_np, load_embeddings
     from .utils.dice_loss import multiclass_dice_loss
-    from .utils.utils import set_seed
+    from .utils.utils import save_config, set_seed
 
     # Getting device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

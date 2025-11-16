@@ -1,9 +1,6 @@
-import logging
 import os
-from pathlib import Path
 from typing import List, Union
 
-from .data_splits import generate_splits
 from .dataset import *
 
 
@@ -39,6 +36,8 @@ def download_datasets(datasets: Union[List[str], str], make_splits: bool = False
         datasets (List[str] or str): A dataset name string or a List of dataset names to download or one of the following aliases: `all`, `classification`, `segmentation`.
         make_splits (bool): Whether to generate data splits for the datasets. Defaults to False.
     """
+    from .data_splits import generate_splits
+
     if "THUNDER_BASE_DATA_FOLDER" not in os.environ:
         raise EnvironmentError(
             "Please set base data directory of thunder using `export THUNDER_BASE_DATA_FOLDER=/base/data/directory`"
@@ -105,6 +104,9 @@ def download_datasets(datasets: Union[List[str], str], make_splits: bool = False
 
 
 def download_dataset(dataset: str):
+    import logging
+    from pathlib import Path
+
     root_folder = os.path.join(
         os.environ["THUNDER_BASE_DATA_FOLDER"], f"datasets/{dataset}"
     )

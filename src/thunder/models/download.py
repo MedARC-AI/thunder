@@ -1,9 +1,5 @@
 import logging
-import os
-from pathlib import Path
 from typing import List, Union
-
-from ..utils.utils import wget_download
 
 # Configure logging
 logging.basicConfig(
@@ -185,7 +181,12 @@ def download_models(models: Union[List[str], str]) -> None:
 
 
 def download_model(model: str) -> None:
+    import os
+    from pathlib import Path
+
     from huggingface_hub import hf_hub_download
+
+    from ..utils.utils import wget_download
 
     if "THUNDER_BASE_DATA_FOLDER" not in os.environ:
         raise EnvironmentError(

@@ -1,9 +1,5 @@
-import logging
 import os
-import random
-from collections import defaultdict
 from collections.abc import Callable
-from pathlib import Path
 from typing import List, Union
 
 
@@ -86,6 +82,8 @@ def generate_splits_for_dataset(dataset_name: str) -> None:
     Args:
         dataset_name (str): The name of the dataset to generate splits for.
     """
+    from pathlib import Path
+
     from omegaconf import OmegaConf
 
     from ..utils.constants import DatasetConstants
@@ -277,6 +275,9 @@ def create_few_shot_training_data(
     :param data_splits: data splits dictionary.
     :param nb_sets_per_nb_shot: number of data sets to create for each number of shots.
     """
+    import random
+    from collections import defaultdict
+
     # Creating lebel2 image dict
     train_images, train_labels = (
         data_splits["train"]["images"],
@@ -313,6 +314,8 @@ def generate_data_splits(
     :param dataset_yaml: path to the dataset yaml config file.
     :param split_function: function to run to generate the data splits.
     """
+    import logging
+
     from omegaconf import OmegaConf
 
     dataset_folder = os.path.join(base_folder, dataset_name)
