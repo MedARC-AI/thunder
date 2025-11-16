@@ -114,10 +114,15 @@ pip install . # install the package
 ## Supported foundation models
 |Name        |Benchmark name          | Vision arch. | Params. | Training method | VLM | Pathology |
 | :--------- | :--------------------: | :----------: | :-----: | :-------------: | :-: | :-------: |
+|GIGAPATH    | provgigapath           | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
 |HIBOU-B     | hiboub                 | ViT-B/14     | 86M     | DINOv2          |     |x          |
 |HIBOU-L     | hiboul                 | ViT-L/14     | 307M    | DINOv2          |     |x          |
 |H-OPTIMUS-0 | hoptimus0              | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
 |H-OPTIMUS-1 | hoptimus1              | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
+|KAIKO-S/8   | kaiko_vits8            | ViT-S/8      | 22M     | DINO            |     |x          |
+|KAIKO-S/16  | kaiko_vits16           | ViT-S/16     | 22M     | DINO            |     |x          |
+|KAIKO-B/8   | kaiko_vitb8            | ViT-B/8      | 86M     | DINO            |     |x          |
+|KAIKO-B/16  | kaiko_vitb16           | ViT-B/16     | 86M     | DINO            |     |x          |
 |MIDNIGHT    | midnight               | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
 |PHIKON      | phikon                 | ViT-B/16     | 86M     | iBOT            |     |x          |
 |PHIKON2     | phikon2                | ViT-L/16     | 307M    | DINOv2          |     |x          |
