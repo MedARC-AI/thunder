@@ -30,6 +30,10 @@ TAGS_FILENAMES = {
         "bioptimus/H-optimus-0",
         "pytorch_model.bin",
     ),  # H-optimus 0 (https://huggingface.co/bioptimus/H-optimus-0)
+    "h0mini": (
+        "bioptimus/H0-mini",
+        "pytorch_model.bin",
+    ),  # H-optimus 0 Mini (https://huggingface.co/bioptimus/H0-mini)
     "hoptimus1": (
         "bioptimus/H-optimus-1",
         "pytorch_model.bin",

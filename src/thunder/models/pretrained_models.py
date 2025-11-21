@@ -323,7 +323,7 @@ def get_model(model_cfg: dict, device: str):
 
             return emb
 
-    elif model_cfg.model_name in ["virchow", "virchow2"]:
+    elif model_cfg.model_name in ["h0mini", "virchow", "virchow2"]:
 
         def extract_embedding(src, pretrained_model, task_type):
             out = pretrained_model(src)
@@ -334,6 +334,8 @@ def get_model(model_cfg: dict, device: str):
                 patch_tokens = out[
                     :, 5:
                 ]  # tokens 1-4 are register tokens so we ignore them.
+            elif model_cfg.model_name == "h0mini":
+                patch_tokens = out[:, pretrained_model.num_prefix_tokens :]
             if task_type != "segmentation":
                 emb = torch.cat([class_token, patch_tokens.mean(1)], dim=-1)
                 return emb
@@ -386,6 +388,7 @@ def get_model_from_name(model_name: str, device: str):
         * virchow
         * virchow2
         * hoptimus0
+        * h0mini
         * hoptimus1
         * provgigapath
         * conch

@@ -1,0 +1,11 @@
+model_name: h0mini
+type: timm
+vlm: false
+emb_dim: 1536
+emb_dim_seg: 768
+ckpt_path: ${oc.env:THUNDER_BASE_DATA_FOLDER}/pretrained_ckpts/h0mini/pytorch_model.bin
+hf_tag: hf-hub:bioptimus/H0-mini
+
+timm_kwargs:
+  mlp_layer: SwiGLUPacked
+  act_layer: SiLU

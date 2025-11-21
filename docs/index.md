@@ -112,33 +112,34 @@ pip install . # install the package
 |SegPath Lymphocytes | segpath_lymphocytes| Segm.    | 2           | Multi    | 256x256     | 40x          | 110,457    |
 
 ## Supported foundation models
-|Name                    |Benchmark name          | Vision arch. | Params. | Training method | VLM | Pathology |
-| :--------------------- | :--------------------: | :----------: | :-----: | :-------------: | :-: | :-------: |
-|GIGAPATH                | provgigapath           | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
-|HIBOU-B                 | hiboub                 | ViT-B/14     | 86M     | DINOv2          |     |x          |
-|HIBOU-L                 | hiboul                 | ViT-L/14     | 307M    | DINOv2          |     |x          |
-|H&minus;OPTIMUS&minus;0 | hoptimus0              | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
-|H&minus;OPTIMUS&minus;1 | hoptimus1              | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
-|KAIKO-S/8               | kaiko_vits8            | ViT-S/8      | 22M     | DINO            |     |x          |
-|KAIKO-S/16              | kaiko_vits16           | ViT-S/16     | 22M     | DINO            |     |x          |
-|KAIKO-B/8               | kaiko_vitb8            | ViT-B/8      | 86M     | DINO            |     |x          |
-|KAIKO-B/16              | kaiko_vitb16           | ViT-B/16     | 86M     | DINO            |     |x          |
-|MIDNIGHT                | midnight               | ViT-G/14     | 1.1B    | DINOv2          |     |x          |
-|PHIKON                  | phikon                 | ViT-B/16     | 86M     | iBOT            |     |x          |
-|PHIKON2                 | phikon2                | ViT-L/16     | 307M    | DINOv2          |     |x          |
-|UNI                     | uni                    | ViT-L/16     | 307M    | DINOv2          |     |x          |
-|UNI2-H                  | uni2h                  | ViT-H/14     | 681M    | DINOv2          |     |x          |
-|VIRCHOW                 | virchow                | ViT-H/14     | 632M    | DINOv2          |     |x          |
-|VIRCHOW2                | virchow2               | ViT-H/14     | 632M    | DINOv2          |     |x          |
-|CONCH                   | conch                  | ViT-B/16     | 86M     | CoCa, iBOT      |x    |x          |
-|CONCH 1.5               | titan                  | ViT-L/16     | 307M    | CoCa            |x    |x          |
-|KEEP                    | keep                   | ViT-L/16     | 307M    | CLIP            |x    |x          |
-|MUSK                    | musk                   | V-FFN        | 202M    | CoCa, BEiT-3    |x    |x          |
-|PLIP                    | plip                   | ViT-B/32     | 86M     | CLIP            |x    |x          |
-|QUILTNET                | quiltnetb32            | ViT-B/32     | 86M     | CLIP            |x    |x          |
-|DINOv2-B                | dinov2base             | ViT-B/14     | 86M     | DINOv2          |     |           |
-|DINOv2-L                | dinov2large            | ViTL/14      | 307M    | DINOv2          |     |           |
-|ViT-B/16                | vitbasepatch16224in21k | ViT-B/16     | 86M     | Imagenet        |     |           |
-|ViT-L/16                | vitlargepatch16224in21k| ViT-L/16     | 307M    | Imagenet        |     |           |
-|CLIP-B/32               | clipvitbasepatch32     | ViT-B/32     | 86M     | CLIP            |x    |           |
-|CLIP-L/14               | clipvitlargepatch14    | ViT-L/14     | 307M    | CLIP            |x    |           |
+|Name                    |Benchmark name          | Vision arch. | Params. | Training method                           | VLM | Pathology |
+| :--------------------- | :--------------------: | :----------: | :-----: | :---------------------------------------: | :-: | :-------: |
+|GIGAPATH                | provgigapath           | ViT-G/14     | 1.1B    | DINOv2                                    |     |x          |
+|HIBOU-B                 | hiboub                 | ViT-B/14     | 86M     | DINOv2                                    |     |x          |
+|HIBOU-L                 | hiboul                 | ViT-L/14     | 307M    | DINOv2                                    |     |x          |
+|H&minus;OPTIMUS&minus;0 | hoptimus0              | ViT-G/14     | 1.1B    | DINOv2                                    |     |x          |
+|H0-mini                 | h0mini                 | ViT-B/14     | 86M     | DINOv2 (teacher: H&minus;OPTIMUS&minus;0) |     |x          |
+|H&minus;OPTIMUS&minus;1 | hoptimus1              | ViT-G/14     | 1.1B    | DINOv2                                    |     |x          |
+|KAIKO-S/8               | kaiko_vits8            | ViT-S/8      | 22M     | DINO                                      |     |x          |
+|KAIKO-S/16              | kaiko_vits16           | ViT-S/16     | 22M     | DINO                                      |     |x          |
+|KAIKO-B/8               | kaiko_vitb8            | ViT-B/8      | 86M     | DINO                                      |     |x          |
+|KAIKO-B/16              | kaiko_vitb16           | ViT-B/16     | 86M     | DINO                                      |     |x          |
+|MIDNIGHT                | midnight               | ViT-G/14     | 1.1B    | DINOv2                                    |     |x          |
+|PHIKON                  | phikon                 | ViT-B/16     | 86M     | iBOT                                      |     |x          |
+|PHIKON2                 | phikon2                | ViT-L/16     | 307M    | DINOv2                                    |     |x          |
+|UNI                     | uni                    | ViT-L/16     | 307M    | DINOv2                                    |     |x          |
+|UNI2-H                  | uni2h                  | ViT-H/14     | 681M    | DINOv2                                    |     |x          |
+|VIRCHOW                 | virchow                | ViT-H/14     | 632M    | DINOv2                                    |     |x          |
+|VIRCHOW2                | virchow2               | ViT-H/14     | 632M    | DINOv2                                    |     |x          |
+|CONCH                   | conch                  | ViT-B/16     | 86M     | CoCa, iBOT                                |x    |x          |
+|CONCH 1.5               | titan                  | ViT-L/16     | 307M    | CoCa                                      |x    |x          |
+|KEEP                    | keep                   | ViT-L/16     | 307M    | CLIP                                      |x    |x          |
+|MUSK                    | musk                   | V-FFN        | 202M    | CoCa, BEiT-3                              |x    |x          |
+|PLIP                    | plip                   | ViT-B/32     | 86M     | CLIP                                      |x    |x          |
+|QUILTNET                | quiltnetb32            | ViT-B/32     | 86M     | CLIP                                      |x    |x          |
+|DINOv2-B                | dinov2base             | ViT-B/14     | 86M     | DINOv2                                    |     |           |
+|DINOv2-L                | dinov2large            | ViTL/14      | 307M    | DINOv2                                    |     |           |
+|ViT-B/16                | vitbasepatch16224in21k | ViT-B/16     | 86M     | Imagenet                                  |     |           |
+|ViT-L/16                | vitlargepatch16224in21k| ViT-L/16     | 307M    | Imagenet                                  |     |           |
+|CLIP-B/32               | clipvitbasepatch32     | ViT-B/32     | 86M     | CLIP                                      |x    |           |
+|CLIP-L/14               | clipvitlargepatch14    | ViT-L/14     | 307M    | CLIP                                      |x    |           |

@@ -7,6 +7,7 @@ class ModelConstants(Enum):
         "hiboub",
         "hiboul",
         "hoptimus0",
+        "h0mini",
         "hoptimus1",
         "kaiko_vits8",
         "kaiko_vits16",
