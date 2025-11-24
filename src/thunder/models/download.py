@@ -150,7 +150,9 @@ def download_models(models: Union[List[str], str]) -> None:
         * virchow
         * virchow2
         * hoptimus0
+        * h0mini
         * hoptimus1
+        * provgigapath
         * conch
         * titan
         * phikon
@@ -158,6 +160,10 @@ def download_models(models: Union[List[str], str]) -> None:
         * hiboub
         * hiboul
         * midnight
+        * kaiko_vits8
+        * kaiko_vits16
+        * kaiko_vitb8
+        * kaiko_vitb16
         * keep
         * quiltb32
         * plip
