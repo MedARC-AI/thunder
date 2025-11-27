@@ -1,3 +1,14 @@
+## [0.2.1] - 2025-11-27
+
+### Added
+- H0-mini foundation model
+
+### Changed
+- Minor change to ranking in leaderboards (same rounded performance = same rank)
+
+### Fixed
+- Updated timm version requirements to adjust to keep
+
 ## [0.2.0] - 2025-11-16
 
 ### Added

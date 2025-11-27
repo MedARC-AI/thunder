@@ -1,6 +1,6 @@
 [project]
 name = "thunder-bench"
-version = "0.2.0"
+version = "0.2.1"
 description = "THUNDER: Tile-level Histopathology image UNDERstanding benchmark"
 requires-python = ">=3.10,<3.14"
 readme = "README.md"
