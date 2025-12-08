@@ -125,6 +125,7 @@ pip install . # install the package
 |KAIKO-B/8               | kaiko_vitb8            | ViT-B/8      | 86M     | DINO                                      |     |x          |
 |KAIKO-B/16              | kaiko_vitb16           | ViT-B/16     | 86M     | DINO                                      |     |x          |
 |MIDNIGHT                | midnight               | ViT-G/14     | 1.1B    | DINOv2                                    |     |x          |
+|OpenMidnight            | openmidnight           | ViT-G/14     | 1.1B    | DINOv2                                    |     |x          |
 |PHIKON                  | phikon                 | ViT-B/16     | 86M     | iBOT                                      |     |x          |
 |PHIKON2                 | phikon2                | ViT-L/16     | 307M    | DINOv2                                    |     |x          |
 |UNI                     | uni                    | ViT-L/16     | 307M    | DINOv2                                    |     |x          |
