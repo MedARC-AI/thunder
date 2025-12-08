@@ -86,6 +86,10 @@ TAGS_FILENAMES = {
         "kaiko-ai/midnight",
         "model.safetensors",
     ),  # Midnight-12k (https://huggingface.co/kaiko-ai/midnight)
+    "openmidnight": (
+        "SophontAI/OpenMidnight",
+        "teacher_checkpoint_load.pt",
+    ),  # OpenMidnight (https://huggingface.co/SophontAI/OpenMidnight)
     "keep": (
         "Astaxanthin/KEEP",
         "model.safetensors",
@@ -160,6 +164,7 @@ def download_models(models: Union[List[str], str]) -> None:
         * hiboub
         * hiboul
         * midnight
+        * openmidnight
         * kaiko_vits8
         * kaiko_vits16
         * kaiko_vitb8

@@ -132,6 +132,8 @@ def get_model(model_cfg: dict, device: str):
             )
     elif model_cfg.type == "open_clip":
         model, transform, tokenizer = get_from_open_clip(model_cfg.ckpt_path)
+    elif model_cfg.type == "torch_hub":
+        model, transform = get_openmidnight(model_cfg.ckpt_path)
     else:
         raise ValueError(f"Unknown model type {model_cfg.type} specified in yaml file.")
 
@@ -362,6 +364,8 @@ def get_model(model_cfg: dict, device: str):
             else:
                 if model_cfg.model_name == "titan":
                     emb = pretrained_model.trunk(src, return_all_tokens=True)[:, 1:]
+                elif model_cfg.model_name == "openmidnight":
+                    emb = pretrained_model.get_intermediate_layers(src)[0]
                 else:
                     emb = pretrained_model.forward_features(src)[:, 1:]
 
@@ -398,6 +402,7 @@ def get_model_from_name(model_name: str, device: str):
         * hiboub
         * hiboul
         * midnight
+        * openmidnight
         * kaiko_vits8
         * kaiko_vits16
         * kaiko_vitb8
@@ -702,6 +707,36 @@ def get_midnight(ckpt_path: str):
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5)),
+        ]
+    )
+
+    return model, transform
+
+
+def get_openmidnight(ckpt_path: str):
+    """
+    Adapted from:
+    - https://huggingface.co/SophontAI/OpenMidnight
+
+    :param ckpt_path: path to the stored checkpoint.
+    """
+    from torchvision import transforms
+
+    # Model
+    model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14_reg", weights=None)
+    checkpoint = torch.load(ckpt_path, map_location="cpu")
+
+    # Required because dinov2 is baseline 392 and openmidnight is baseline 224 resolution
+    pos_embed = checkpoint["pos_embed"]
+    model.pos_embed = torch.nn.parameter.Parameter(pos_embed)
+    model.load_state_dict(checkpoint)
+
+    # Transform
+    transform = transforms.Compose(
+        [
+            transforms.Resize((224, 224)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
 

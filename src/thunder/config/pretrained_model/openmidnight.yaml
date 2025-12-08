@@ -1,0 +1,5 @@
+model_name: openmidnight
+type: torch_hub
+vlm: false
+emb_dim: 1536             
+ckpt_path: ${oc.env:THUNDER_BASE_DATA_FOLDER}/pretrained_ckpts/openmidnight/teacher_checkpoint_load.pt
