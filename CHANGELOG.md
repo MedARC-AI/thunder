@@ -1,3 +1,9 @@
+## [0.2.2] - 2026-01-27
+
+### Added
+- OpenMidnight foundation model
+- User-Agent header to download requests
+
 ## [0.2.1] - 2025-11-27
 
 ### Added
