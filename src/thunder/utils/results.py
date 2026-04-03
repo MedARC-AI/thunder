@@ -1,7 +1,18 @@
 import logging
 import os
 
-METRICS = ["accuracy", "balanced_accuracy", "f1", "jaccard", "roc_auc"]
+METRICS = [
+    "accuracy",
+    "balanced_accuracy",
+    "f1",
+    "jaccard",
+    "roc_auc",
+    "ECE",
+    "MCE",
+    "SCE",
+    "ACE",
+    "TACE",
+]
 
 TASK2CATS = {
     "adversarial_attack": ["adversarial", "clean", "drop"],
