@@ -82,7 +82,7 @@ Usage:
 This script is intentionally opinionated:
 - datasets come from /block/eva-data when present
 - missing datasets are downloaded to /block/thunder-data/<dataset>
-- runs live under /block/eva-data/thunder_runs
+- runs live under tmp/
 - jobs always request 1x H100 80GB on partition main
 - linear probing always runs as:
     pre_computing_embeddings
@@ -118,7 +118,7 @@ EOF
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 venv_activate="$repo_root/.venv/bin/activate"
 dinov2_repo="/admin/home/paul/dinov2_official"
-runtime_parent="/block/eva-data/thunder_runs"
+runtime_parent="$repo_root/tmp"
 local_data_root="/block/eva-data"
 download_data_root="/block/thunder-data"
 download_staging_root="$download_data_root/.thunder-download-tmp"
