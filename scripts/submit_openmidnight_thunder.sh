@@ -85,9 +85,11 @@ This script is intentionally opinionated:
 - runs live under tmp/
 - final metrics summaries live under thunder_outputs/
 - jobs always request 1x H100 80GB on partition main
+- embedding-backed evals reuse precomputed embeddings
 - linear probing always runs as:
     pre_computing_embeddings
     linear_probing --loading-mode=embedding_pre_loading
+- knn / fewshot / image_retrieval / alignment_scoring / zero_shot_vlm reuse the same embedding cache
 
 Task aliases:
   linear calib -> linear_probing
@@ -386,12 +388,10 @@ for dataset in "${datasets[@]}"; do
 done
 printf '%s\n' "$(quoted_command thunder generate-data-splits "${datasets[@]}")" >> "$job_script"
 
-declare -a linear_labels=()
-declare -a linear_commands=()
+declare -a parallel_task_groups=()
 
 for dataset in "${datasets[@]}"; do
   need_precompute=0
-  need_linear=0
 
   for task in "${tasks[@]}"; do
     case "$task" in
@@ -400,11 +400,12 @@ for dataset in "${datasets[@]}"; do
         ;;
       linear_probing)
         need_precompute=1
-        need_linear=1
+        ;;
+      knn|simple_shot|image_retrieval|alignment_scoring|zero_shot_vlm)
+        need_precompute=1
         ;;
       adversarial_attack)
         need_precompute=1
-        need_linear=1
         ;;
     esac
   done
@@ -419,53 +420,76 @@ for dataset in "${datasets[@]}"; do
     fi
     printf '%s\n' "$(quoted_command run_timed "$dataset" pre_computing_embeddings "${cmd[@]}")" >> "$job_script"
   fi
-
-  if [[ "$need_linear" -eq 1 ]]; then
-    cmd=(
-      thunder benchmark openmidnight "$dataset" linear_probing
-      --loading-mode=embedding_pre_loading
-      --pretrained_model.ckpt_path "$ckpt_path"
-    )
-    if [[ "$retrain_model" -eq 1 ]]; then
-      cmd+=(--retrain-model)
-    fi
-    linear_labels+=("${dataset}-linear_probing")
-    linear_commands+=("$(quoted_command run_timed "$dataset" linear_probing "${cmd[@]}")")
-  fi
 done
 
-if [[ ${#linear_commands[@]} -gt 0 ]]; then
-  if [[ "$parallel_datasets" -gt 1 && ${#linear_commands[@]} -gt 1 ]]; then
-    {
-      echo 'parallel_log_dir="$THUNDER_BASE_DATA_FOLDER/slurm-logs/parallel-${SLURM_JOB_ID:-none}"'
-      echo 'mkdir -p "$parallel_log_dir"'
-      echo 'pids=()'
-      echo 'labels=()'
-      echo 'wait_group() {'
-      echo '  local i rc'
-      echo '  for i in "${!pids[@]}"; do'
-      echo '    if wait "${pids[$i]}"; then'
-      echo '      echo "Completed ${labels[$i]}"'
-      echo '    else'
-      echo '      rc=$?'
-      echo '      echo "Failed ${labels[$i]} with exit code $rc" >&2'
-      echo '      for pid in "${pids[@]}"; do'
-      echo '        kill "$pid" 2>/dev/null || true'
-      echo '      done'
-      echo '      wait || true'
-      echo '      exit "$rc"'
-      echo '    fi'
-      echo '  done'
-      echo '  pids=()'
-      echo '  labels=()'
-      echo '}'
-      echo 'echo "Parallel linear logs: $parallel_log_dir"'
-    } >> "$job_script"
+for task in "${tasks[@]}"; do
+  case "$task" in
+    linear_probing|knn|simple_shot|image_retrieval|alignment_scoring|zero_shot_vlm)
+      parallel_task_groups+=("$task")
+      ;;
+  esac
+done
 
+if [[ ${#parallel_task_groups[@]} -gt 0 && "$parallel_datasets" -gt 1 ]]; then
+  {
+    echo 'parallel_log_dir="$THUNDER_BASE_DATA_FOLDER/slurm-logs/parallel-${SLURM_JOB_ID:-none}"'
+    echo 'mkdir -p "$parallel_log_dir"'
+    echo 'pids=()'
+    echo 'labels=()'
+    echo 'wait_group() {'
+    echo '  local i rc'
+    echo '  for i in "${!pids[@]}"; do'
+    echo '    if wait "${pids[$i]}"; then'
+    echo '      echo "Completed ${labels[$i]}"'
+    echo '    else'
+    echo '      rc=$?'
+    echo '      echo "Failed ${labels[$i]} with exit code $rc" >&2'
+    echo '      for pid in "${pids[@]}"; do'
+    echo '        kill "$pid" 2>/dev/null || true'
+    echo '      done'
+    echo '      wait || true'
+    echo '      exit "$rc"'
+    echo '    fi'
+    echo '  done'
+    echo '  pids=()'
+    echo '  labels=()'
+    echo '}'
+  } >> "$job_script"
+fi
+
+for task in "${parallel_task_groups[@]}"; do
+  declare -a group_labels=()
+  declare -a group_commands=()
+
+  for dataset in "${datasets[@]}"; do
+    case "$task" in
+      linear_probing)
+        cmd=(
+          thunder benchmark openmidnight "$dataset" linear_probing
+          --loading-mode=embedding_pre_loading
+          --pretrained_model.ckpt_path "$ckpt_path"
+        )
+        if [[ "$retrain_model" -eq 1 ]]; then
+          cmd+=(--retrain-model)
+        fi
+        ;;
+      knn|simple_shot|image_retrieval|alignment_scoring|zero_shot_vlm)
+        cmd=(
+          thunder benchmark openmidnight "$dataset" "$task"
+          --pretrained_model.ckpt_path "$ckpt_path"
+        )
+        ;;
+    esac
+    group_labels+=("${dataset}-${task}")
+    group_commands+=("$(quoted_command run_timed "$dataset" "$task" "${cmd[@]}")")
+  done
+
+  if [[ "$parallel_datasets" -gt 1 && ${#group_commands[@]} -gt 1 ]]; then
+    printf 'echo "Parallel %s logs: $parallel_log_dir"\n' "$task" >> "$job_script"
     batch_size=0
-    for i in "${!linear_commands[@]}"; do
-      label="${linear_labels[$i]}"
-      line="${linear_commands[$i]}"
+    for i in "${!group_commands[@]}"; do
+      label="${group_labels[$i]}"
+      line="${group_commands[$i]}"
       {
         echo '('
         echo '  set -euo pipefail'
@@ -485,16 +509,16 @@ if [[ ${#linear_commands[@]} -gt 0 ]]; then
       echo 'wait_group' >> "$job_script"
     fi
   else
-    for line in "${linear_commands[@]}"; do
+    for line in "${group_commands[@]}"; do
       printf '%s\n' "$line" >> "$job_script"
     done
   fi
-fi
+done
 
 for dataset in "${datasets[@]}"; do
   for task in "${tasks[@]}"; do
     case "$task" in
-      pre_computing_embeddings|linear_probing)
+      pre_computing_embeddings|linear_probing|knn|simple_shot|image_retrieval|alignment_scoring|zero_shot_vlm)
         continue
         ;;
     esac
