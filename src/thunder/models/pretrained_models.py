@@ -717,6 +717,69 @@ def get_midnight(ckpt_path: str):
 
     return model, transform
 
+
+def _normalize_openmidnight_checkpoint(checkpoint: dict) -> dict:
+    if isinstance(checkpoint, dict) and "teacher" in checkpoint:
+        checkpoint = checkpoint["teacher"]
+    if not isinstance(checkpoint, dict):
+        raise TypeError(
+            f"Unsupported OpenMidnight checkpoint object type: {type(checkpoint).__name__}"
+        )
+    if "pos_embed" in checkpoint and not any(
+        key.startswith("backbone.") for key in checkpoint.keys()
+    ):
+        return checkpoint
+
+    normalized = {}
+    for key, value in checkpoint.items():
+        if not key.startswith("backbone."):
+            continue
+        key = key[len("backbone.") :]
+        parts = key.split(".")
+        if (
+            len(parts) >= 4
+            and parts[0] == "blocks"
+            and parts[1].isdigit()
+            and parts[2].isdigit()
+        ):
+            key = f"blocks.{parts[2]}.{'.'.join(parts[3:])}"
+        normalized[key] = value
+    if "pos_embed" not in normalized:
+        raise KeyError(
+            "OpenMidnight checkpoint does not contain a usable backbone 'pos_embed'."
+        )
+    return normalized
+
+
+def _get_openmidnight_model_name(checkpoint: dict) -> str:
+    model_stems = {
+        384: "vits14",
+        768: "vitb14",
+        1024: "vitl14",
+        1536: "vitg14",
+    }
+    embed_dim = checkpoint["pos_embed"].shape[-1]
+    try:
+        model_stem = model_stems[embed_dim]
+    except KeyError as exc:
+        raise ValueError(
+            f"Unsupported OpenMidnight embedding dimension {embed_dim} in checkpoint."
+        ) from exc
+
+    has_registers = (
+        "register_tokens" in checkpoint and checkpoint["register_tokens"].shape[1] > 0
+    )
+    model_suffix = "_reg" if has_registers else ""
+    return f"dinov2_{model_stem}{model_suffix}"
+
+
+def get_openmidnight_embedding_dim(ckpt_path: str) -> int:
+    checkpoint = _normalize_openmidnight_checkpoint(
+        torch.load(ckpt_path, map_location="cpu")
+    )
+    return checkpoint["pos_embed"].shape[-1]
+
+
 def get_openmidnight(ckpt_path: str):
     """
     Adapted from:
@@ -726,41 +789,16 @@ def get_openmidnight(ckpt_path: str):
     """
     from torchvision import transforms
 
+    checkpoint = _normalize_openmidnight_checkpoint(
+        torch.load(ckpt_path, map_location="cpu")
+    )
+
     # Model
     model = torch.hub.load(
         "facebookresearch/dinov2",
-        "dinov2_vitg14_reg",
+        _get_openmidnight_model_name(checkpoint),
         pretrained=False,
     )
-    checkpoint = torch.load(ckpt_path, map_location="cpu")
-    if isinstance(checkpoint, dict) and "teacher" in checkpoint:
-        checkpoint = checkpoint["teacher"]
-    if not isinstance(checkpoint, dict):
-        raise TypeError(
-            f"Unsupported OpenMidnight checkpoint object type: {type(checkpoint).__name__}"
-        )
-    if "pos_embed" not in checkpoint or any(
-        key.startswith("backbone.") for key in checkpoint.keys()
-    ):
-        normalized = {}
-        for key, value in checkpoint.items():
-            if not key.startswith("backbone."):
-                continue
-            key = key[len("backbone.") :]
-            parts = key.split(".")
-            if (
-                len(parts) >= 4
-                and parts[0] == "blocks"
-                and parts[1].isdigit()
-                and parts[2].isdigit()
-            ):
-                key = f"blocks.{parts[2]}.{'.'.join(parts[3:])}"
-            normalized[key] = value
-        checkpoint = normalized
-    if "pos_embed" not in checkpoint:
-        raise KeyError(
-            "OpenMidnight checkpoint does not contain a usable backbone 'pos_embed'."
-        )
 
     # Required because dinov2 is baseline 392 and openmidnight is baseline 224 resolution
     pos_embed = checkpoint["pos_embed"]

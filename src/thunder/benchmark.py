@@ -39,6 +39,7 @@ def benchmark(
     from omegaconf import OmegaConf
     import os
 
+    from .models.pretrained_models import get_openmidnight_embedding_dim
     from .datasets.utils import is_dataset_available
     from .models.utils import (
         is_model_available,
@@ -86,6 +87,16 @@ def benchmark(
     if dataset is None:
         OmegaConf.set_struct(cfg, False)
         cfg.dataset = dataset_cfg
+
+    if cfg.pretrained_model.model_name == "openmidnight" and hasattr(
+        cfg.pretrained_model, "ckpt_path"
+    ):
+        OmegaConf.set_struct(cfg, False)
+        cfg.pretrained_model.emb_dim = get_openmidnight_embedding_dim(
+            cfg.pretrained_model.ckpt_path
+        )
+        if hasattr(cfg.pretrained_model, "emb_dim_seg"):
+            cfg.pretrained_model.emb_dim_seg = cfg.pretrained_model.emb_dim
 
     print_task_hyperparams(cfg, custom_name=custom_name)
 

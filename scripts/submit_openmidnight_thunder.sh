@@ -83,6 +83,7 @@ This script is intentionally opinionated:
 - datasets come from /block/eva-data when present
 - missing datasets are downloaded to /block/thunder-data/<dataset>
 - runs live under tmp/
+- final metrics summaries live under thunder_outputs/
 - jobs always request 1x H100 80GB on partition main
 - linear probing always runs as:
     pre_computing_embeddings
@@ -118,7 +119,8 @@ EOF
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 venv_activate="$repo_root/.venv/bin/activate"
 dinov2_repo="/admin/home/paul/dinov2_official"
-runtime_parent="$repo_root/tmp"
+runtime_parent="/tmp/openmidnight"
+summary_dir="$repo_root/thunder_outputs"
 local_data_root="/block/eva-data"
 download_data_root="/block/thunder-data"
 download_staging_root="$download_data_root/.thunder-download-tmp"
@@ -238,6 +240,7 @@ unset deduped
 
 ckpt_path="$(realpath "$ckpt_path")"
 runtime_parent="$(realpath -m "$runtime_parent")"
+summary_dir="$(realpath -m "$summary_dir")"
 local_data_root="$(realpath -m "$local_data_root")"
 download_data_root="$(realpath -m "$download_data_root")"
 download_staging_root="$(realpath -m "$download_staging_root")"
@@ -247,12 +250,17 @@ ckpt_slug="${ckpt_slug%.*}"
 ckpt_slug="${ckpt_slug,,}"
 ckpt_slug="$(printf '%s' "$ckpt_slug" | sed -E 's#[^a-z0-9._-]+#-#g; s#-+#-#g; s#(^-|-$)##g')"
 ckpt_hash="$(stat -Lc '%n:%s:%Y' "$ckpt_path" | sha1sum | cut -c1-12)"
-runtime_dir="$runtime_parent/openmidnight/${ckpt_slug}-${ckpt_hash}"
+runtime_prefix="$runtime_parent/${ckpt_slug}-${ckpt_hash}"
+summary_prefix="${ckpt_slug}-${ckpt_hash}"
+slurm_job_dir="$summary_dir/slurm-jobs"
+slurm_log_dir="$summary_dir/slurm-logs"
 
 mkdir -p \
-  "$runtime_dir/datasets" \
-  "$runtime_dir/slurm-logs" \
-  "$runtime_dir/slurm-jobs"
+  "$summary_dir" \
+  "$slurm_job_dir" \
+  "$slurm_log_dir"
+
+declare -A dataset_paths=()
 
 for dataset in "${datasets[@]}"; do
   dataset_cfg="$repo_root/src/thunder/config/dataset/${dataset}.yaml"
@@ -321,48 +329,62 @@ for dataset in "${datasets[@]}"; do
 
   [[ -n "$dataset_path" ]] || die "Dataset '$dataset' is unavailable"
   rm -f "$dataset_path/content"
-
-  staged_dataset_path="$runtime_dir/datasets/$dataset"
-  if [[ -L "$staged_dataset_path" && ! -e "$staged_dataset_path" ]]; then
-    rm -f "$staged_dataset_path"
-  fi
-  if [[ ! -e "$staged_dataset_path" ]]; then
-    ln -s "$dataset_path" "$staged_dataset_path"
-  fi
-  [[ "$(realpath "$staged_dataset_path")" == "$dataset_path" ]] || die "Staged dataset '$staged_dataset_path' does not point to '$dataset_path'"
+  dataset_paths["$dataset"]="$dataset_path"
 done
 
-missing_splits=()
-for dataset in "${datasets[@]}"; do
-  if [[ ! -f "$runtime_dir/datasets/data_splits/${dataset}.json" ]]; then
-    missing_splits+=("$dataset")
-  fi
-done
+old_ifs="$IFS"
+IFS=,
+dataset_csv="${datasets[*]}"
+task_csv="${tasks[*]}"
+IFS="$old_ifs"
 
-if [[ ${#missing_splits[@]} -gt 0 ]]; then
-  echo "Generating THUNDER splits in $runtime_dir for: ${missing_splits[*]}"
-  # shellcheck disable=SC1090
-  source "$venv_activate"
-  export THUNDER_BASE_DATA_FOLDER="$runtime_dir"
-  (
-    cd "$repo_root"
-    thunder generate-data-splits "${missing_splits[@]}"
-  )
-fi
-
-job_script="$runtime_dir/slurm-jobs/thunder-openmidnight-$(date -u +%Y%m%dT%H%M%SZ).sbatch"
+job_stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+job_script="$slurm_job_dir/thunder-openmidnight-${job_stamp}.sbatch"
 {
   echo "#!/usr/bin/env bash"
   echo "set -euo pipefail"
   echo "set -x"
-  printf 'export THUNDER_BASE_DATA_FOLDER=%q\n' "$runtime_dir"
+  printf 'runtime_dir="%s-${SLURM_JOB_ID:-none}"\n' "$runtime_prefix"
+  printf 'summary_file="%s/%s-${SLURM_JOB_ID:-none}.json"\n' "$summary_dir" "$summary_prefix"
+  printf 'timings_file="%s/%s-${SLURM_JOB_ID:-none}.timings.tsv"\n' "$slurm_log_dir" "$summary_prefix"
+  echo 'mkdir -p "$runtime_dir/datasets" "$runtime_dir/slurm-logs" "$runtime_dir/slurm-jobs"'
+  echo 'export THUNDER_BASE_DATA_FOLDER="$runtime_dir"'
+  echo 'export THUNDER_SUMMARY_FILE="$summary_file"'
+  echo 'export THUNDER_TIMINGS_FILE="$timings_file"'
+  printf 'export THUNDER_REQUESTED_DATASETS=%q\n' "$dataset_csv"
+  printf 'export THUNDER_REQUESTED_TASKS=%q\n' "$task_csv"
+  printf 'export THUNDER_CHECKPOINT_PATH=%q\n' "$ckpt_path"
   printf 'export PYTHONPATH=%q:${PYTHONPATH:-}\n' "$dinov2_repo"
   echo 'export PYTHONUNBUFFERED=1'
   printf 'source %q\n' "$venv_activate"
   printf 'cd %q\n' "$repo_root"
   echo 'echo "SLURM_JOB_ID=${SLURM_JOB_ID:-none}"'
+  echo 'echo "THUNDER_BASE_DATA_FOLDER=$THUNDER_BASE_DATA_FOLDER"'
   echo 'nvidia-smi'
+  echo ': > "$THUNDER_TIMINGS_FILE"'
+  cat <<'EOF'
+run_timed() {
+  local dataset="$1"
+  local task="$2"
+  local start_ms end_ms status
+  shift 2
+  start_ms="$(date +%s%3N)"
+  if "$@"; then
+    status=0
+  else
+    status=$?
+  fi
+  end_ms="$(date +%s%3N)"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$dataset" "$task" "$start_ms" "$end_ms" "$status" >> "$THUNDER_TIMINGS_FILE"
+  return "$status"
+}
+EOF
 } > "$job_script"
+
+for dataset in "${datasets[@]}"; do
+  printf 'ln -s %q "$runtime_dir/datasets/%s"\n' "${dataset_paths[$dataset]}" "$dataset" >> "$job_script"
+done
+printf '%s\n' "$(quoted_command thunder generate-data-splits "${datasets[@]}")" >> "$job_script"
 
 declare -a linear_labels=()
 declare -a linear_commands=()
@@ -395,7 +417,7 @@ for dataset in "${datasets[@]}"; do
     if [[ "$recomp_embs" -eq 1 ]]; then
       cmd+=(--recomp-embs)
     fi
-    printf '%s\n' "$(quoted_command "${cmd[@]}")" >> "$job_script"
+    printf '%s\n' "$(quoted_command run_timed "$dataset" pre_computing_embeddings "${cmd[@]}")" >> "$job_script"
   fi
 
   if [[ "$need_linear" -eq 1 ]]; then
@@ -408,7 +430,7 @@ for dataset in "${datasets[@]}"; do
       cmd+=(--retrain-model)
     fi
     linear_labels+=("${dataset}-linear_probing")
-    linear_commands+=("$(quoted_command "${cmd[@]}")")
+    linear_commands+=("$(quoted_command run_timed "$dataset" linear_probing "${cmd[@]}")")
   fi
 done
 
@@ -481,9 +503,141 @@ for dataset in "${datasets[@]}"; do
       thunder benchmark openmidnight "$dataset" "$task"
       --pretrained_model.ckpt_path "$ckpt_path"
     )
-    printf '%s\n' "$(quoted_command "${cmd[@]}")" >> "$job_script"
+    printf '%s\n' "$(quoted_command run_timed "$dataset" "$task" "${cmd[@]}")" >> "$job_script"
   done
 done
+
+cat >> "$job_script" <<'EOF'
+python - <<'PY'
+import json
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+
+import torch
+from thunder.models.pretrained_models import _normalize_openmidnight_checkpoint
+
+runtime_dir = Path(os.environ["THUNDER_BASE_DATA_FOLDER"])
+summary_file = Path(os.environ["THUNDER_SUMMARY_FILE"])
+share_file = summary_file.with_suffix(".txt")
+timings_file = Path(os.environ["THUNDER_TIMINGS_FILE"])
+datasets = [item for item in os.environ["THUNDER_REQUESTED_DATASETS"].split(",") if item]
+tasks = [item for item in os.environ["THUNDER_REQUESTED_TASKS"].split(",") if item]
+checkpoint_path = os.environ["THUNDER_CHECKPOINT_PATH"]
+
+def format_duration(seconds):
+    total_seconds = max(0, int(round(seconds)))
+    hours, rem = divmod(total_seconds, 3600)
+    minutes, secs = divmod(rem, 60)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+
+def metric_tree(node):
+    if isinstance(node, dict):
+        if "metric_score" in node:
+            return node["metric_score"]
+        out = {}
+        for key, value in node.items():
+            metric_value = metric_tree(value)
+            if metric_value is not None:
+                out[key] = metric_value
+        if out:
+            return out
+    return None
+
+checkpoint = _normalize_openmidnight_checkpoint(
+    torch.load(checkpoint_path, map_location="cpu")
+)
+embed_dim = checkpoint["pos_embed"].shape[-1]
+model_names = {
+    384: ("ViT-small", "vits14"),
+    768: ("ViT-base", "vitb14"),
+    1024: ("ViT-large", "vitl14"),
+    1536: ("ViT-giant", "vitg14"),
+}
+model_size, model_code = model_names[embed_dim]
+if "register_tokens" in checkpoint and checkpoint["register_tokens"].shape[1] > 0:
+    model_code = f"{model_code}_reg"
+model_label = f"OpenMidnight {model_size} ({model_code.removesuffix('_reg')})"
+
+task_timings = {}
+dataset_duration_seconds = {}
+if timings_file.exists():
+    for line in timings_file.read_text().splitlines():
+        if not line:
+            continue
+        dataset, task, start_ms, end_ms, exit_code = line.split("\t")
+        duration_seconds = max(0.0, (int(end_ms) - int(start_ms)) / 1000.0)
+        dataset_duration_seconds[dataset] = dataset_duration_seconds.get(dataset, 0.0) + duration_seconds
+        task_timings.setdefault(dataset, {})[task] = {
+            "duration_hms": format_duration(duration_seconds),
+            "exit_code": int(exit_code),
+        }
+
+results = {}
+f1_scores = {}
+for dataset in datasets:
+    results[dataset] = {}
+    for task in tasks:
+        outputs_json = runtime_dir / "outputs" / "res" / dataset / "openmidnight" / task / "frozen" / "outputs.json"
+        entry = {}
+        timing = task_timings.get(dataset, {}).get(task)
+        if timing:
+            entry["duration_hms"] = timing["duration_hms"]
+        if timing and timing["exit_code"] != 0:
+            entry["exit_code"] = timing["exit_code"]
+        if outputs_json.exists():
+            entry["status"] = "ok"
+            metrics = metric_tree(json.loads(outputs_json.read_text()))
+            entry["metrics"] = metrics
+            if task == "linear_probing" and metrics and "f1" in metrics:
+                f1_scores[dataset] = metrics["f1"]
+        else:
+            entry["status"] = "missing"
+        results[dataset][task] = entry
+
+share_lines = [f"__{model_label}__"]
+for dataset in datasets:
+    if dataset not in f1_scores:
+        continue
+    score = f"{f1_scores[dataset]:.4f}"
+    if score.startswith("0"):
+        score = score[1:]
+    share_lines.append(f"{dataset} {score}")
+share_text = "\n".join(share_lines)
+
+summary = {
+    "created_at_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "slurm_job_id": os.environ.get("SLURM_JOB_ID"),
+    "checkpoint_path": checkpoint_path,
+    "model_label": model_label,
+    "datasets": datasets,
+    "tasks": tasks,
+    "dataset_durations_hms": {
+        dataset: format_duration(dataset_duration_seconds[dataset])
+        for dataset in datasets
+        if dataset in dataset_duration_seconds
+    },
+    "task_durations_hms": {
+        dataset: {
+            task: task_timings[dataset][task]["duration_hms"]
+            for task in tasks
+            if dataset in task_timings and task in task_timings[dataset]
+        }
+        for dataset in datasets
+        if dataset in task_timings
+    },
+    "f1_scores": f1_scores,
+    "results": results,
+    "share_text": share_text,
+    "share_file": str(share_file),
+}
+summary_file.parent.mkdir(parents=True, exist_ok=True)
+summary_file.write_text(json.dumps(summary, indent=2) + "\n")
+share_file.write_text(share_text + "\n")
+print(f"Wrote THUNDER metrics summary to {summary_file}")
+print(f"Wrote THUNDER share summary to {share_file}")
+PY
+EOF
 
 chmod +x "$job_script"
 
@@ -497,13 +651,14 @@ sbatch_cmd=(
   --time "$time_limit"
   --gres "$gres"
   --job-name "$job_name"
-  --output "$runtime_dir/slurm-logs/%x-%j.out"
-  --error "$runtime_dir/slurm-logs/%x-%j.err"
+  --output "$slurm_log_dir/%x-%j.out"
+  --error "$slurm_log_dir/%x-%j.err"
   "$job_script"
 )
 
-echo "THUNDER runtime dir: $runtime_dir"
+echo "THUNDER runtime prefix: $runtime_prefix"
 echo "Generated job script: $job_script"
+echo "Metrics summary template: $summary_dir/${summary_prefix}-"'${SLURM_JOB_ID:-none}.json'
 
 if [[ "$dry_run" -eq 1 ]]; then
   echo
@@ -517,5 +672,12 @@ if [[ "$dry_run" -eq 1 ]]; then
 fi
 
 job_id="$("${sbatch_cmd[@]}")"
+runtime_dir="${runtime_prefix}-${job_id}"
+summary_file="$summary_dir/${summary_prefix}-${job_id}.json"
+timings_file="$slurm_log_dir/${summary_prefix}-${job_id}.timings.tsv"
 echo "Submitted Slurm job ${job_id}"
-echo "Logs: $runtime_dir/slurm-logs"
+echo "THUNDER runtime dir: $runtime_dir"
+echo "Metrics summary file: $summary_file"
+echo "Share summary file: ${summary_file%.json}.txt"
+echo "Timings file: $timings_file"
+echo "Logs: $slurm_log_dir"
