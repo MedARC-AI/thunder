@@ -37,6 +37,7 @@ def benchmark(
     """
     from hydra import compose, initialize
     from omegaconf import OmegaConf
+    import os
 
     from .datasets.utils import is_dataset_available
     from .models.utils import (
@@ -93,7 +94,12 @@ def benchmark(
 
         download_datasets(dataset, make_splits=True)
 
-    if model_name and not is_model_available(model_name):
+    ckpt_path = (
+        cfg.pretrained_model.ckpt_path
+        if model_name and hasattr(cfg.pretrained_model, "ckpt_path")
+        else None
+    )
+    if model_name and not (ckpt_path and os.path.exists(ckpt_path)) and not is_model_available(model_name):
         from . import download_models
 
         download_models(model)

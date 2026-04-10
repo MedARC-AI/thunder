@@ -717,7 +717,6 @@ def get_midnight(ckpt_path: str):
 
     return model, transform
 
-
 def get_openmidnight(ckpt_path: str):
     """
     Adapted from:
@@ -728,8 +727,40 @@ def get_openmidnight(ckpt_path: str):
     from torchvision import transforms
 
     # Model
-    model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14_reg", weights=None)
+    model = torch.hub.load(
+        "facebookresearch/dinov2",
+        "dinov2_vitg14_reg",
+        pretrained=False,
+    )
     checkpoint = torch.load(ckpt_path, map_location="cpu")
+    if isinstance(checkpoint, dict) and "teacher" in checkpoint:
+        checkpoint = checkpoint["teacher"]
+    if not isinstance(checkpoint, dict):
+        raise TypeError(
+            f"Unsupported OpenMidnight checkpoint object type: {type(checkpoint).__name__}"
+        )
+    if "pos_embed" not in checkpoint or any(
+        key.startswith("backbone.") for key in checkpoint.keys()
+    ):
+        normalized = {}
+        for key, value in checkpoint.items():
+            if not key.startswith("backbone."):
+                continue
+            key = key[len("backbone.") :]
+            parts = key.split(".")
+            if (
+                len(parts) >= 4
+                and parts[0] == "blocks"
+                and parts[1].isdigit()
+                and parts[2].isdigit()
+            ):
+                key = f"blocks.{parts[2]}.{'.'.join(parts[3:])}"
+            normalized[key] = value
+        checkpoint = normalized
+    if "pos_embed" not in checkpoint:
+        raise KeyError(
+            "OpenMidnight checkpoint does not contain a usable backbone 'pos_embed'."
+        )
 
     # Required because dinov2 is baseline 392 and openmidnight is baseline 224 resolution
     pos_embed = checkpoint["pos_embed"]
@@ -793,4 +824,3 @@ def get_genbio_pathfm(ckpt_path: str):
     ])
 
     return model, transform
-
