@@ -292,6 +292,8 @@ def train_probe(
                             best_val_perf = np.array(losses[i]).mean().item()
                         best_ckpt_hyperparam_id = i
                         best_ckpt_dict = ckpt_epoch_dicts[best_ckpt_hyperparam_id]
+                        if task_type == "linear_probing":
+                            best_ckpt_dict["val_metrics"] = metrics[i]
 
             if split == "val" and not cfg.ckpt_saving.best_only:
                 torch.save(

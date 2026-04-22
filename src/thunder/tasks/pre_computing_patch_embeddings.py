@@ -90,7 +90,7 @@ def pre_computing_patch_embeddings(
             split_dataset,
             batch_size=cfg.task.pre_comp_emb_batch_size,
             shuffle=False,
-            num_workers=1,
+            num_workers=cfg.task.pre_comp_emb_num_workers,
         )
         pre_computing_patch_embeddings_split(
             os.path.join(embeddings_folder, split),

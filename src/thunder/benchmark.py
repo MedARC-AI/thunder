@@ -49,7 +49,8 @@ def benchmark(
     from .utils.config import get_config
     from .utils.utils import print_task_hyperparams
 
-    wandb_mode = "online" if online_wandb else "offline"
+    env_wandb_mode = os.environ.get("THUNDER_WANDB_MODE")
+    wandb_mode = env_wandb_mode if env_wandb_mode is not None else ("online" if online_wandb else "offline")
     adaptation_type = "lora" if lora else "frozen"
     ckpt_saving = "save_ckpts_all_epochs" if ckpt_save_all else "save_best_ckpt_only"
     embedding_recomputing = "recomp_embs" if recomp_embs else "no_recomp_embs"
@@ -88,8 +89,10 @@ def benchmark(
         OmegaConf.set_struct(cfg, False)
         cfg.dataset = dataset_cfg
 
-    if cfg.pretrained_model.model_name == "openmidnight" and hasattr(
-        cfg.pretrained_model, "ckpt_path"
+    if (
+        hasattr(cfg, "pretrained_model")
+        and cfg.pretrained_model.model_name == "openmidnight"
+        and hasattr(cfg.pretrained_model, "ckpt_path")
     ):
         OmegaConf.set_struct(cfg, False)
         cfg.pretrained_model.emb_dim = get_openmidnight_embedding_dim(
@@ -152,7 +155,7 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
     from .utils.constants import UtilsConstants
     from .utils.data import get_data, h5_to_np, load_embeddings
     from .utils.dice_loss import multiclass_dice_loss
-    from .utils.utils import save_config, set_seed
+    from .utils.utils import save_config, save_outputs, set_seed
 
     # Getting device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -187,7 +190,8 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
     ), "We do not pre-load both images and embeddings."
 
     # W&B login
-    wandb.login()
+    if cfg.wandb.mode == "online":
+        wandb.login()
 
     # W&B run
     wandb.init(
@@ -291,25 +295,27 @@ def run_benchmark(cfg: DictConfig, model_cls: Callable = None) -> None:
             best_ckpt_dict = torch.load(
                 os.path.join(ckpt_folder, "best_model.pth"), weights_only=True
             )
-        # Probe evaluation
-        eval_probe(
-            cfg,
-            data,
-            dataset_name,
-            model_name,
-            embedding_pre_loading,
-            image_pre_loading,
-            adaptation_type,
-            task_type,
-            criterion,
-            device,
-            base_data_folder,
-            base_embeddings_folder,
-            wandb_base_folder,
-            res_folder,
-            best_ckpt_dict,
-            model_cls,
-        )
+        if task_type == "linear_probing":
+            save_outputs(res_folder, best_ckpt_dict["val_metrics"])
+        else:
+            eval_probe(
+                cfg,
+                data,
+                dataset_name,
+                model_name,
+                embedding_pre_loading,
+                image_pre_loading,
+                adaptation_type,
+                task_type,
+                criterion,
+                device,
+                base_data_folder,
+                base_embeddings_folder,
+                wandb_base_folder,
+                res_folder,
+                best_ckpt_dict,
+                model_cls,
+            )
 
     elif task_type in [
         "alignment_scoring",
