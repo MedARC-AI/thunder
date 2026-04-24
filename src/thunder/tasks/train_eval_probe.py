@@ -228,7 +228,7 @@ def train_probe(
                 task_specific_model,
                 optimizer,
                 device,
-                comp_metrics=(task_type == "linear_probing"),
+                comp_metrics=(task_type == "linear_probing" and split == "val"),
             )
 
             ckpt_epoch_dicts = {}
@@ -242,7 +242,7 @@ def train_probe(
                     split,
                     epoch,
                 )
-                if task_type == "linear_probing":
+                if task_type == "linear_probing" and metrics is not None:
                     log_metrics(
                         wandb_base_folder,
                         metrics[i],
