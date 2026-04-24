@@ -70,7 +70,7 @@ def pre_computing_patch_embeddings(
         dataset_task_type = "linear_probing"
     else:
         dataset_task_type = "segmentation"
-    for split in ["train", "val", "test"]:
+    for split in (["train", "val"] if dataset_task_type == "linear_probing" else ["train", "val", "test"]):
         split_dataset = PatchDataset(
             data[split]["images"],
             data[split]["labels"],
