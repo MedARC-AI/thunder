@@ -728,7 +728,7 @@ def get_openmidnight(ckpt_path: str):
     from torchvision import transforms
 
     # Model
-    model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14_reg", weights=None)
+    model = torch.hub.load("facebookresearch/dinov2", "dinov2_vitg14_reg", pretrained=False)
     checkpoint = torch.load(ckpt_path, map_location="cpu")
 
     # Required because dinov2 is baseline 392 and openmidnight is baseline 224 resolution
